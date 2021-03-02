@@ -2,6 +2,7 @@
 //https://stackoverflow.com/questions/4139170/bind-httserver-to-local-ipport-so-that-others-in-lan-can-see-it
 //      python -m http.server 8888 --bind 0.0.0.0 --cgi - then view on <ip>:8888
 let Au = {
+	BASE_URL:"./cgi-bin/server.py",    //URL of the AJAX endpoint
     varArea:"42",           //filter out messages to only be from this room. currently unused.
     varMessagePollTime:1000,//time in ms between polling the server for messages
     varMessageId:0,         //ID for getting server messages up to this value
@@ -578,7 +579,7 @@ Au.sendMessage = function(jsonString){
     };
     console.log("sending: ",jsonString);
     $.ajax({
-        url:"./cgi-bin/server.py",
+        url:Au.BASE_URL,
         data:data,
         method:"POST",
         dataType:"JSON"
@@ -597,7 +598,7 @@ Au.getMessage = function(messageId){
         id:messageId
     };
     $.ajax({
-        url:"./cgi-bin/server.py",
+        url:Au.BASE_URL,
         data:data,
         method:"POST",
         dataType:"JSON"
@@ -621,7 +622,7 @@ Au.resetServer = function(){
         kind:"reset"
     };
     $.ajax({
-        url:"./cgi-bin/server.py",
+        url:Au.BASE_URL,
         data:data,
         method:"POST",
         dataType:"JSON"
