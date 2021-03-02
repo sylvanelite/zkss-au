@@ -1,7 +1,7 @@
 //get message
 //TODO: connect to DB or something...
 
-export default function() {
+export default function(request,pool) {
     let res = "this is some code";
     try{
         
