@@ -4,7 +4,7 @@
 export default function(request,response,pool) {
     try{
 			if(!request.query.hasOwnProperty("api")){
-						rresponse.send("param not found");
+						response.send("param not found");
 			}else{        
 				var api = request.query.api;
 				pool.connect().then(function(client){
