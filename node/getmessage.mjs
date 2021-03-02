@@ -10,8 +10,11 @@ export default function(request,response,client) {
                 response.send("param not found");
 			}else{        
 				var api = request.query.api;
-                client.connect();
-                client.query(' SELECT key FROM api WHERE (key=$1) ',[api])
+                client.connect().catch(function(err){
+                    responseObj.data ="error: "+e;
+                    response.send(responseObj);
+                });
+                client.query(' SELECT key FROM messages WHERE (area=$1) ',[api])
                 .then(function(result){
                     responseObj.success = true;
                     responseObj.data = JSON.stringify(result);
