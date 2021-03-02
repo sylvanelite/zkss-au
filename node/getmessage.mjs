@@ -21,7 +21,7 @@ export default function(request,response,client) {
                     response.send(responseObj);
                 }).catch(function(err) {
                     console.log(err);
-                    client.release();
+                    client.end();
                     responseObj.data="Error API lookup";
                 response.send(JSON.stringify(responseObj));
                 });
