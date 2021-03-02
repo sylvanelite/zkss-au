@@ -14,7 +14,7 @@ export default function(request,response,client) {
                     responseObj.data ="error: "+err;
                     response.send(responseObj);
                 });
-                client.query(' SELECT key FROM messages WHERE (area=$1) ',[api])
+                client.query(' SELECT message FROM messages WHERE (area=$1) ',[api])
                 .then(function(result){
                     responseObj.success = true;
                     responseObj.data = JSON.stringify(result);
