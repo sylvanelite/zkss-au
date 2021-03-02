@@ -1,7 +1,7 @@
 //get message
 //TODO: connect to DB or something...
 
-export default function(request,response,pool) {
+export default function(request,response,client) {
     try{
 			if(!request.query.hasOwnProperty("api")){
 						response.send("param not found");
