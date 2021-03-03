@@ -10,7 +10,6 @@ export default function(request,response,client) {
     try{
         let state = new Base();
         console.log(state.generateState());
-        
 			if(!request.query.hasOwnProperty("api")){
                 response.send("param not found");
 			}else{        
@@ -28,7 +27,7 @@ export default function(request,response,client) {
                     console.log(err);
                     client.end();
                     responseObj.data="Error API lookup";
-                response.send(JSON.stringify(responseObj));
+                    response.send(JSON.stringify(responseObj));
                 });
 			}       
     }catch(e){

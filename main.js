@@ -1,162 +1,41 @@
 //to run with CGI: python -m http.server --bind localhost --cgi 8000
 //https://stackoverflow.com/questions/4139170/bind-httserver-to-local-ipport-so-that-others-in-lan-can-see-it
 //      python -m http.server 8888 --bind 0.0.0.0 --cgi - then view on <ip>:8888
-let Au = {
-	BASE_URL:"./cgi-bin/server.py",    //URL of the AJAX endpoint
-    varArea:"42",           //filter out messages to only be from this room. currently unused.
-    varMessagePollTime:1000,//time in ms between polling the server for messages
-    varMessageId:0,         //ID for getting server messages up to this value
-    getMessageTimer:0,      //timer that counts down between messages
-    varMessageBuffer:[],    //if multiple messages arrive between polls, they are buffered here
-    varPlayerId:"",         //the ID of your player (alpha)
-    varPlayers:{},          //list of player objects, stored by IDs
-    varCurrentTask:"",      //when clicking  "do", this is populated with whatever you're looking at
-    varCurrentTaskId:"",    //an additional param extracted from the QR code
-    varTasks:{},            //list of tasks for every player, in the form playerId_idx
-    varFakeTasks:[],            //if you're the imposter, these are generated just for rendering
-    varVotes:[],                //count of global votes cast during a meeting
-    varMeetingHost: "",         //global host of the meeting
-    varLookingAtQr:"",          //populated with whatever QR code is currently being looked at
-    varLookingAtTime:0,         //timers: counts down 15ms per game tick, refreshed every game loop (note alerts might block this)
-    varKillCooldown:0,
-    varMeetingCooldown:0,
-    varLogMessages:[],          //buffer for when viewing the logs
-    TIME_BETWEEN_MEETING:30000, //30 seconds between entering a meeting and calling another
-    TIME_BETWEEN_KILL:30000,    //30 seconds between kills for imposter
-    TIME_BETWEEN_SABOTAGE:30000,//duration of sabotaged events
-    TIME_LOOK_AT:3000,          //number of seconds the action button will be visible after a scan
-    IMPOSTER_NUMBER:1,          //initial number of imposters
-    TASK_NUMBER:8,              //initial number of tasks per player
-    MAP_RENDER_SIZE:320,        //square size for the map image to be scaled to
-    //https://www.the-qrcode-generator.com/
-    EVENTS:{
-        JOIN:"JOIN",
-        START:"START",
-        CLEAR_TASK:"CLEAR_TASK",
-        KILL:"KILL",
-        MEETING:"MEETING",
-        SABOTAGE:"SABOTAGE",
-        VOTE:"VOTE",
-        TAG_INFO:"TAG_INFO"
-    },
-    STATES:{
-        MAIN_MENU:"MAIN_MENU", //host/join
-        LOBBY:"LOBBY",         //game not started, waiting for people to join (actions: begin)
-        PLAYING:"PLAYING",     //main gameplay (actions: move, start task, report, meeting, sabotage, kill)
-        TASK:"TASK",           //player is doing some minigame 
-        MEETING:"MEETING",     //meeting (override tasks)
-        VIEW_LOG:"VIEW_LOG"    //viewing the log entries
-    },
-    TASKS:{
-        KILL:"Kill",
-        SABOTAGE:"Sabotage",
-        TASK:"Task",
-        INTERACT:"Interact",
-        MEETING:"Meeting",
-        VIEW_LOG:"Logs"
-    },
-    currentState:"LOBBY",
-};
+
+
+import Au from "./js/globals.mjs";
+import StateLobby from "./js/state_lobby.mjs";
+import StateMainMenu from "./js/state_main_menu.mjs";
+import StateMeeting from "./js/state_meeting.mjs";
+import StatePlaying from "./js/state_playing.mjs";
+import StateTask from "./js/state_task.mjs";
+import StateViewLog from "./js/state_view_log.mjs";
 
 //entry point, assign ID and initial state
 Au.init = function(){
     //assign a playerId
-    let getRandomString=function(length){
-        let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        let res ="";
-        for(let i=0; i<length; i+=1) {
-           res += characters.charAt(Math.floor(Math.random() * characters.length));
-        }
-        return res;
-    };
-    Au.varPlayerId = getRandomString(50);
+    Au.varPlayerId = Au.getRandomString(50);
     Au.varPlayers[Au.varPlayerId] = {displayName:"",id:Au.varPlayerId};//TODO: create player objects
     
     //main menu
-    //btnCreateRoom
-    $("#btnCreateRoom").on("click",function(){
-        Au.varArea = getRandomString(3);
-        //TODO: this nukes the entire server, not just the current area
-        //NOTE: this means clicking "create" will nuke currently created rooms
-        Au.resetServer();
-        Au.varMessageId = 0;
-        Au.currentState = Au.STATES.LOBBY;
-        Au.start();
-        $("#btnStart").show();
-    });
-    //btnJoinRoom
-    $("#btnJoinRoom").on("click",function(){
-        Au.varArea = prompt("Enter host code:");
-        Au.varArea = Au.varArea.toUpperCase();
-        Au.varMessageId = 0;
-        Au.currentState = Au.STATES.LOBBY;
-        Au.start();
-    });
+    Au.states = {};
+    Au.states.stateLobby = new StateLobby();
+    Au.states.stateMainMenu = new StateMainMenu();
+    Au.states.stateMeeting = new StateMeeting();
+    Au.states.statePlaying = new StatePlaying();
+    Au.states.stateTask = new StateTask();
+    Au.states.stateViewLog = new StateViewLog();
     
+    for (const state of Object.values(Au.states)) {
+      state.init();
+      state.hide();
+    }
+
+    Au.state = Au.states.stateMainMenu;
+    console.log(Au);
     
-    //lobby
-    $("#btnPlayerJoin").on("click",function(){
-        var name= $("#iptPlayerName").val();
-        if(!name.length){
-            alert("Enter a name first.");
-            return;
-        }
-        //parse out non alphanumeric
-        Au.varPlayers[Au.varPlayerId].displayName=name.replace(/\W/g, '');
-        $("#btnPlayerJoin").attr("disabled","disabled");
-        $("#iptPlayerName").attr("disabled","disabled");
-        $("#btnStart").prop("disabled",false);
-        Au.sendMessage(JSON.stringify({
-            kind:Au.EVENTS.JOIN,
-            playername:Au.varPlayers[Au.varPlayerId].displayName,
-            id:Au.varPlayerId
-        }));
-    });
-    $("#btnStart").on("click",function(){
-        if(!$("#iptPlayerName").is(":disabled")){
-            alert("You are not ready");
-            return;
-        }
-        let seed = Math.floor(Math.random()*10000);
-        Au.sendMessage(JSON.stringify({
-            kind:Au.EVENTS.START,
-            seed:seed
-        }));
-        $("#btnStart").attr("disabled","disabled");
-    });
-    
-    //playing
-    $("#btnAction").on("click",function(){
-        Au.doAction(Au.varCurrentTask,Au.varCurrentTaskId);
-    });
-    $("#iptImgFile").on("change",function(){
-        Au.scanFromFile();
-    });
-    
-    //minigame
-    $("#btnCloseTask").on("click",function () {
-        //back out of minigame without doing changes
-        Au.currentState = Au.STATES.PLAYING;
-        $("#btnCloseTask").attr("data-task","");
-        //clear out whatever was selected before
-        Au.varLookingAtTime = 0;
-    });
-    
-    //meeting
-    $("#btnVote").on("click",function(){
-        //TODO: here
-        $("#btnVote").attr("disabled","disabled");
-        let selectedPlayer = $("[name=rdVote]:checked").val();
-        if(!selectedPlayer){
-            alert("Select a vote first");
-            return;
-        }
-        Au.sendMessage(JSON.stringify({
-               kind:Au.EVENTS.VOTE,
-               from:Au.varPlayerId,
-               name:selectedPlayer
-           }));
-    });
+    //starts the main loops running
+    Au.renderLoop();
     
     $(window).on("resize",function(){
         if(Au.hasOwnProperty("canvas")){
@@ -188,386 +67,12 @@ Au.logic = function(){
         Au.processEvent(Au.varMessageBuffer[i]);
     }
     Au.varMessageBuffer = [];
-    if(Au.currentState == Au.STATES.PLAYING){
-        //read QR events
-        
-        //the camera has lost the QR code for more than a certain timeframe, clear the action
-        if( Au.varLookingAtTime>0){
-             Au.varLookingAtTime -= 15;
-        }else{
-            Au.varLookingAtTime = 0;
-            Au.varLookingAtQr = "";
-        }
-        if( Au.varMeetingCooldown>0){
-             Au.varMeetingCooldown -= 15;
-        }else{
-            Au.varMeetingCooldown = 0;
-        }
-        if( Au.varKillCooldown>0){
-             Au.varKillCooldown -= 15;
-        }else{
-            Au.varKillCooldown = 0;
-        }
-        //update your sabotaged cooldowns
-        let keys = Object.keys(Au.varTasks);
-        for(let i=0;i<keys.length;i+=1){
-            let task = Au.varTasks[keys[i]];
-            if(task.owner == Au.varPlayerId){
-                if(task.SabotageCooldown>0){
-                    task.SabotageCooldown -= 15;
-               }else{
-                   task.SabotageCooldown=0;
-               }
-            }
-        }
-        //QR codes have the values:
-        // player_[ID]
-        // task_[TD]
-        let qr = Au.varLookingAtQr;
-        Au.varCurrentTask = "";
-        Au.varCurrentTaskId = "";
-        
-        let qrKind = "";
-        let qrId = "";
-        if(qr.length){
-            qrKind = qr.split("_")[0];
-            qrId =  qr.split("_")[1];
-        }else{
-            return;//nothing in target, skip doing anything
-        }
-        let isImposter = Au.varPlayers[Au.varPlayerId].isImposter;
-        if(isImposter){
-            if(qrKind == "player"){
-                Au.varCurrentTask = Au.TASKS.KILL;
-                Au.varCurrentTaskId = qrId;
-            }
-            if(qrKind == "task"){
-                Au.varCurrentTask = Au.TASKS.SABOTAGE;
-                Au.varCurrentTaskId = qrId;
-            }
-        }
-        if(!isImposter){
-            if(qrKind == "task"){
-                Au.varCurrentTask = Au.TASKS.TASK;
-                Au.varCurrentTaskId = qrId;
-            }
-            if(qrKind == "player"){
-                Au.varCurrentTask = Au.TASKS.INTERACT;
-                Au.varCurrentTaskId = qrId;
-            }
-        }
-        //anyone can call the meeting
-        if(qrKind == "meeting"){
-            Au.varCurrentTask = Au.TASKS.MEETING;
-            Au.varCurrentTaskId = "";
-        }
-        //anyone can view logs
-        if(qrKind == "log"){
-            Au.varCurrentTask = Au.TASKS.VIEW_LOG;
-            Au.varCurrentTaskId = "";
-        }
-    }
-    if(Au.currentState == Au.STATES.TASK){
-        let taskKey = $("#btnCloseTask").attr("data-task");
-        if(!taskKey.length){
-            alert("no task!");//should not get here
-        }
-        let task = Au.varTasks[taskKey];
-        if($("#dvMinigame"+task.name).length==0){//if there's no minigame, mark it as clear immediately.
-            task.isStarted = true;
-            console.log("skipping task: ",task);
-        }
-    }
-    if(Au.currentState == Au.STATES.MEETING){
-        //TODO: is there anything that needs to be done in meeting? timer?
-    }
+    Au.state.update();
     
 };
 //main rendering
 Au.render = function(){
-    let fontFamily = ' system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial';
-    if(Au.currentState == Au.STATES.LOBBY){
-        $("#dvLobby").show();
-        $("#dvMainMenu").hide();
-        $("#dvPlaying").hide();
-        $("#dvMeeting").hide();
-        $(".minigame").hide();
-        if($("#dvCurrentPlayers").attr("data-needsRefresh") == "true"){
-            let dvPlayerText = "";
-            let keys=Object.keys(Au.varPlayers);
-            for(let i=0;i<keys.length;i+=1){
-                if(keys[i] == Au.varPlayerId){
-                    continue;
-                }
-                let player = Au.varPlayers[keys[i]];
-                dvPlayerText+="<li  class='list-group-item list-group-item-primary'>"+player.displayName+"</li>";
-            }
-            $("#dvCurrentPlayers").html("<ul  class='list-group list-group-flush'>"+dvPlayerText+"</ul>");
-            $("#dvRoomName").text("ROOM: "+Au.varArea);
-            $("#dvCurrentPlayers").attr("data-needsRefresh",false);
-        }
-    }
-    if(Au.currentState == Au.STATES.MAIN_MENU){
-        if(!$("#dvMainMenu").is(":visible")){
-            $("#dvMainMenu").show();
-        }
-        if($("#dvLobby").is(":visible")){
-            $("#dvLobby").hide();
-        }
-        if($("#btnCloseTask").is(":visible")){
-            $("#btnCloseTask").hide();
-        }
-        if($("#dvPlaying").is(":visible")){
-            $("#dvPlaying").hide();
-        }
-        if($("#dvMeeting").is(":visible")){
-            $("#dvMeeting").hide();
-        }
-        $(".minigame").hide();
-    }
-    if(Au.currentState == Au.STATES.PLAYING){
-        if($("#dvMainMenu").is(":visible")){
-            $("#dvMainMenu").hide();
-        }
-        if($("#dvLobby").is(":visible")){
-            $("#dvLobby").hide();
-        }
-        if($("#btnCloseTask").is(":visible")){
-            $("#btnCloseTask").hide();
-        }
-        
-        if(!$("#dvPlaying").is(":visible")){
-            $("#dvPlaying").show();
-        }
-        if(!$("#lblScan").is(":visible")){
-            $("#lblScan").show();
-        }
-        if($("#dvMeeting").is(":visible")){
-            $("#dvMeeting").hide();
-        }
-        $(".minigame").hide();
-        if(!Au.hasOwnProperty("canvas")){
-            Au.canvas = document.createElement("canvas");
-            Au.canvas.width = window.innerWidth;
-            Au.canvas.height = window.innerHeight;
-            Au.canvas.style.position="absolute";
-            Au.canvas.style.left="0px";
-            Au.canvas.style.top="0px";
-            Au.canvas.style.zIndex="-1";
-            $("#dvPlaying").prepend(Au.canvas);
-        }
-        let ctx = Au.canvas.getContext("2d");
-        ctx.clearRect(0,0,Au.canvas.width,Au.canvas.height);
-        //--draw the background map
-        let map = document.getElementById("map");
-        ctx.drawImage(map,Au.canvas.width-Au.MAP_RENDER_SIZE,0,Au.MAP_RENDER_SIZE,Au.MAP_RENDER_SIZE);
-        
-        
-        //--draw tasks
-        let keys =Object.keys(Au.varTasks);
-        ctx.font = "16pt "+fontFamily;
-        let taskY = 48;
-        for(let i=0;i<keys.length;i+=1){
-            let taskId = keys[i];
-            let playerId = taskId.split("_")[0];
-            let task =  Au.varTasks[taskId];
-            if(playerId==Au.varPlayerId){
-                let text = "Task: "+task.name+" "+task.description;
-                let rewardPlayer = Au.varPlayers[Au.varPlayerId];
-                let playerKeys = Object.keys(Au.varPlayers);
-                for(let i=0;i<playerKeys.length;i+=1){
-                    let player = Au.varPlayers[playerKeys[i]];
-                    if(player.playerTag == task.rewardPlayer){
-                        rewardPlayer = player;
-                    }
-                }
-                ctx.fillStyle = "#FFFFFF";
-                if(!Au.varPlayers[Au.varPlayerId].isAlive){
-                    ctx.fillStyle = "#873333";//red text to indicate you've been killed
-                }
-                if(task.isStarted){
-                    ctx.fillStyle = "#cccc00";
-                    text +=" ("+rewardPlayer.playerTag+" "+rewardPlayer.displayName+")";
-                }
-                if(task.isClear){
-                    ctx.fillStyle = "#338833";
-                    if(!Au.varPlayers[Au.varPlayerId].isAlive){
-                        ctx.fillStyle = "#843281";//pruple text to indicate you've been killed
-                    }
-                }
-                ctx.fillText(text, 10+0.5, taskY+0.5);
-                taskY+=24;
-            }
-        }
-        //--draw fake tasks
-        if(Au.varPlayers[Au.varPlayerId].isImposter ){
-            if(Au.varFakeTasks.length==0){
-                let generateFakeTask = function(){
-                    let task = {name:""};
-                    let names =  ["A","B","C","D","E","F","G","H"];
-                    task.name = names[Math.floor(Au.PRNG()*names.length)];
-                    task.description= "";
-                    return task;
-                };
-                for(let i=0;i<Au.TASK_NUMBER;i+=1){
-                    Au.varFakeTasks.push(generateFakeTask());
-                }
-            }
-            for(let i=0;i<Au.varFakeTasks.length;i+=1){
-                let text = "Fake: "+Au.varFakeTasks[i].name+" "+Au.varFakeTasks[i].description;
-                ctx.fillStyle = "#FFFFFF";
-                ctx.fillText(text, 10+0.5, taskY+0.5);
-                taskY+=24;
-            }
-        }
-        //draw your name/status
-        if(Au.varPlayers[Au.varPlayerId].isImposter){
-            ctx.fillStyle = "#883333";
-        }else{
-            ctx.fillStyle = "#338833"; 
-        }
-        ctx.font = '16pt '+fontFamily;
-        ctx.fillText(Au.varPlayers[Au.varPlayerId].playerTag+": "+Au.varPlayers[Au.varPlayerId].displayName,  10.5,28.5);
-        //draw timer behind the action button
-        if(Au.varCurrentTask.length>0 && Au.varLookingAtTime>0){
-            let btnWidth = $("#btnAction").width()+48;
-            let btnX = $("#btnAction").position().left;
-            let btnY = $("#btnAction").position().top;
-            
-            let scale = Au.varLookingAtTime/Au.TIME_LOOK_AT;
-            
-            ctx.fillStyle = "#000000";
-            ctx.fillRect(btnX, btnY-8, (btnWidth), 8);
-            ctx.fillStyle = "#333333";
-            ctx.fillRect(btnX, btnY-8, (btnWidth)*scale, 8);
-        }
-        
-        if($("#btnAction").attr("data-action")!=Au.varCurrentTask){
-            $("#btnAction").attr("data-action",Au.varCurrentTask);
-            if(Au.varCurrentTask.length>0){
-                $("#btnAction").text(Au.varCurrentTask);
-                $("#btnAction").show();
-            }else{
-                $("#btnAction").text("--");
-                $("#btnAction").hide();
-            }
-        }
-    }
-    if(Au.currentState == Au.STATES.TASK){
-        if(!$("#btnCloseTask").is(":visible")){
-            $("#btnCloseTask").show();
-        }
-        if($("#lblScan").is(":visible")){
-            $("#lblScan").hide();
-        }
-        if($("#btnAction").is(":visible")){
-            $("#btnAction").hide();
-        }
-        if($("#dvMeeting").is(":visible")){
-            $("#dvMeeting").hide();
-        }
-        let ctx = Au.canvas.getContext("2d");
-        ctx.clearRect(0,0,Au.canvas.width,Au.canvas.height);
-        let taskKey = $("#btnCloseTask").attr("data-task");
-        let task = Au.varTasks[taskKey];
-        if(!task.isStarted &&
-           !$("#dvMinigame"+task.name).is(":visible")){
-            //show the minigame
-            $("#dvMinigame"+task.name).show();
-            Au.resetMinigames();
-        }
-        let rewardPlayer = Au.varPlayers[Au.varPlayerId];
-        let playerKeys = Object.keys(Au.varPlayers);
-        for(let i=0;i<playerKeys.length;i+=1){
-            let player = Au.varPlayers[playerKeys[i]];
-            if(player.playerTag == task.rewardPlayer){
-                rewardPlayer = player;
-            }
-        }
-        ctx.font = "16pt "+fontFamily;
-        ctx.fillStyle = "#FFFFFF";
-        ctx.fillText("Task has been started.", 32.5, 32.5);
-        ctx.fillText("Scan player: "+rewardPlayer.displayName+" to clear.",32.5,48.5);
-    }
-    if(Au.currentState == Au.STATES.MEETING){
-        if($("#btnCloseTask").is(":visible")){
-            $("#btnCloseTask").hide();
-        }
-        if($("#lblScan").is(":visible")){
-            $("#lblScan").hide();
-        }
-        if($("#btnAction").is(":visible")){
-            $("#btnAction").hide();
-        }
-        $(".minigame").hide();
-        if(!$("#dvMeeting").is(":visible")){
-            $("#dvMeeting").show();
-            $(".voteItem").remove();
-            //refresh with meeting options
-            let playerKeys = Object.keys(Au.varPlayers);
-            for(let i=0;i<playerKeys.length;i+=1){
-                let player = Au.varPlayers[playerKeys[i]];
-                if(player.isAlive){
-                    let hostIndicator = "";
-                    if(player.id == Au.varMeetingHost){
-                        hostIndicator="*";
-                    }
-                    $("#dvMeetingVote").prepend($(`
-                        <div class="voteItem form-check">
-                            <label style="color:white;"  class="form-check-label">
-                            ${player.playerTag}: ${player.displayName}${hostIndicator}
-                                <input type="radio" name="rdVote" value="${player.id}" class="form-check-input">
-                            </label>
-                        </div>`));
-                }else{
-                    $("#dvMeetingVote").prepend($(`
-                        <div class="voteItem">
-                            <s style="color:#888888;">
-                            ${player.playerTag}: ${player.displayName}
-                            </s>
-                        </div>`));
-                }
-            }
-            //show progress level
-            //<progress id="prgTasks" max="100" value="0"> 0% </progress>
-            let taskKeys = Object.keys(Au.varTasks);
-            let max = taskKeys.length;
-            let cur = 0 ;
-            for(let i=0;i<taskKeys.length;i+=1){
-                let task = Au.varTasks[taskKeys[i]];
-                if(task.isClear){
-                    cur+=1;
-                }
-            }
-            let progress = Math.floor((cur/max)*100);
-            $("#prgTasks").val(progress);
-            $("#prgTasks").text(progress+"%");
-            //show the disabled button
-            $("#btnVote").prop("disabled",false);
-        }
-        let ctx = Au.canvas.getContext("2d");
-        ctx.clearRect(0,0,Au.canvas.width,Au.canvas.height);
-        //NOTE: nothing to draw on canvas just yet
-    }
-    
-    if(Au.currentState == Au.STATES.VIEW_LOG){
-        if(!$("#btnCloseTask").is(":visible")){
-            $("#btnCloseTask").show();
-        }
-        let ctx = Au.canvas.getContext("2d");
-        ctx.clearRect(0,0,Au.canvas.width,Au.canvas.height);
-        //draw header
-        ctx.fillStyle = "#FFFFFF";
-        ctx.font = "16pt "+fontFamily;
-        let logY = 48;
-        ctx.fillText("Viewing logs: ",  10.5,28.5);
-        //draw messages
-        for(let i=0;i<Au.varLogMessages.length;i+=1){
-            let text = Au.varLogMessages[i];
-            ctx.fillText(text, 10+0.5, logY+0.5);
-            logY+=24;
-        }
-    }
+    Au.state.render();
 };
 
 //message should be a json string, processed by: JSON.stringify()
@@ -633,16 +138,6 @@ Au.resetServer = function(){
     
 };
 
-//starts the main loops running
-Au.start = function(){
-    Au.mainLoop();
-    Au.renderLoop();
-};
-//stops the main loops running
-Au.stop = function(){
-    window.cancelAnimationFrame(Au.animationId);
-    window.clearTimeout(Au.loopId);
-};
 
 //handle events recieved over the wire (and locally...)
 Au.processEvent = function(evt){
@@ -754,7 +249,7 @@ Au.evtStart = function(json){
             Au.varTasks[keys[i]+"_"+j] = task;
         }
     }
-    Au.currentState = Au.STATES.PLAYING;
+    Au.state = Au.states.statePlaying;
     let txt = ".";
     if( Au.varPlayers[Au.varPlayerId].isImposter){
         txt = "\nYou are the imposter.";
@@ -826,7 +321,7 @@ Au.evtKill = function(json){
 Au.evtMeeting = function(json){
     Au.varMeetingHost = json.host;
     Au.varVotes = [];
-    Au.currentState = Au.STATES.MEETING;
+    Au.state = Au.states.stateMeeting;
     Au.varMeetingCooldown = Au.TIME_BETWEEN_MEETING;
 };
 //sabotage [event]
@@ -886,7 +381,7 @@ Au.evtVote = function(json){
     }
     if(tally.skip_vote>=aliveCount/2){//skip was majority
         alert("Nobody voted out: "+tally.skip_vote+" players skipped voting.");
-        Au.currentState = Au.STATES.PLAYING;
+        Au.state = Au.states.statePlaying;
         return;
     }
     if(maxTally<aliveCount/2){//vote was interim
@@ -904,7 +399,7 @@ Au.evtVote = function(json){
     }
     if(tieCount>1){
         alert("Nobody voted out: "+tieCount+" players tied for votes.");
-        Au.currentState = Au.STATES.PLAYING;
+        Au.state = Au.states.statePlaying;
         return;
     }
     //vote out the player
@@ -916,13 +411,13 @@ Au.evtVote = function(json){
         name:votedId,
         from:Au.varPlayerId//TODO: will show a prompt that you've been killed by yourself
     });//kill will check the number of alive characters left
-    Au.currentState = Au.STATES.PLAYING;
+    Au.state = Au.states.statePlaying;
     
 };
 //name, tag
 Au.evtTagInfo = function(json){
     let displayName = Au.varPlayers[json.name].displayName;
-    if(Au.currentState == Au.STATES.VIEW_LOG){
+    if(Au.state == Au.states.stateViewLog){
         let logText = displayName+", scanned: "+json.tag;
         Au.varLogMessages.unshift(logText);//push message into the start of the array
     }
@@ -994,7 +489,7 @@ Au.doAction = function(task,qrId){
                     }
                     //yes, it's something you can do: TODO: create more minigames
                     $("#btnCloseTask").attr("data-task",keys[i]);
-                    Au.currentState = Au.STATES.TASK;
+                    Au.state = Au.states.stateTask;
                     return;//only do 1 task at a time, even if multiple have the same tag
                 }
             }
@@ -1066,7 +561,7 @@ Au.doAction = function(task,qrId){
     }
     if(task == Au.TASKS.VIEW_LOG){
         Au.varLogMessages = [];
-        Au.currentState = Au.STATES.VIEW_LOG;
+        Au.state = Au.states.stateViewLog;
     }
     
 };

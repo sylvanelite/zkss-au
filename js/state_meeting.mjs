@@ -1,0 +1,136 @@
+
+import Au from "./globals.mjs";
+
+export default class StateMeeting {
+  constructor() {}
+  
+  init(){
+    let meetingTemplate = `
+  
+	<div id="dvMeeting" class="container" style="display:none;">
+		<div class="row">
+			<div class="col-3"></div>
+			<div class="col-6">
+				<span style="color:white;">Cast your vote:</span>
+			</div>
+			<div class="col-3"></div>
+		</div>
+		<div class="row">
+			<div class="col-3"></div>
+			<div class="col-6" id="dvMeetingVote">
+				<div class="form-check">
+					<label style="color:white;" class="form-check-label"> Skip
+						<input type="radio" name="rdVote" value="skip_vote" class="form-check-input">
+					</label>
+				</div>
+			</div>
+			<div class="col-3"></div>
+		</div>
+		<div class="row">
+			<div class="col-3"></div>
+			<div class="col-6" id="">
+				<span  style="color:white;" class="form-check-label">
+					Task progress:
+				<progress id="prgTasks" max="100" value="0"> 0% </progress>
+				</span>
+			</div>
+			<div class="col-3"></div>
+		</div>
+		<div class="row">
+			<div class="col-12"id="dvMeetingVote">
+				<button id="btnVote" style="position:fixed;bottom:0px;width:6em;height:6em;margin:1em;" class="btn btn-secondary">Vote</button>
+			</div>
+		</div>
+	
+	</div>
+  
+  `;
+  $("#main").append($(meetingTemplate));
+  
+    $("#btnVote").on("click",function(){
+        //TODO: here
+        $("#btnVote").attr("disabled","disabled");
+        let selectedPlayer = $("[name=rdVote]:checked").val();
+        if(!selectedPlayer){
+            alert("Select a vote first");
+            return;
+        }
+        Au.sendMessage(JSON.stringify({
+               kind:Au.EVENTS.VOTE,
+               from:Au.varPlayerId,
+               name:selectedPlayer
+           }));
+    });
+    
+    
+  }
+  hide(){    
+    $("#dvMeeting").hide();
+  }
+  render(){
+    if($("#btnCloseTask").is(":visible")){
+        $("#btnCloseTask").hide();
+    }
+    if($("#lblScan").is(":visible")){
+        $("#lblScan").hide();
+    }
+    if($("#btnAction").is(":visible")){
+        $("#btnAction").hide();
+    }
+    $(".minigame").hide();
+    if(!$("#dvMeeting").is(":visible")){
+        $("#dvMeeting").show();
+        $(".voteItem").remove();
+        //refresh with meeting options
+        let playerKeys = Object.keys(Au.varPlayers);
+        for(let i=0;i<playerKeys.length;i+=1){
+            let player = Au.varPlayers[playerKeys[i]];
+            if(player.isAlive){
+                let hostIndicator = "";
+                if(player.id == Au.varMeetingHost){
+                    hostIndicator="*";
+                }
+                $("#dvMeetingVote").prepend($(`
+                    <div class="voteItem form-check">
+                        <label style="color:white;"  class="form-check-label">
+                        ${player.playerTag}: ${player.displayName}${hostIndicator}
+                            <input type="radio" name="rdVote" value="${player.id}" class="form-check-input">
+                        </label>
+                    </div>`));
+            }else{
+                $("#dvMeetingVote").prepend($(`
+                    <div class="voteItem">
+                        <s style="color:#888888;">
+                        ${player.playerTag}: ${player.displayName}
+                        </s>
+                    </div>`));
+            }
+        }
+        //show progress level
+        //<progress id="prgTasks" max="100" value="0"> 0% </progress>
+        let taskKeys = Object.keys(Au.varTasks);
+        let max = taskKeys.length;
+        let cur = 0 ;
+        for(let i=0;i<taskKeys.length;i+=1){
+            let task = Au.varTasks[taskKeys[i]];
+            if(task.isClear){
+                cur+=1;
+            }
+        }
+        let progress = Math.floor((cur/max)*100);
+        $("#prgTasks").val(progress);
+        $("#prgTasks").text(progress+"%");
+        //show the disabled button
+        $("#btnVote").prop("disabled",false);
+    }
+    let ctx = Au.canvas.getContext("2d");
+    ctx.clearRect(0,0,Au.canvas.width,Au.canvas.height);
+    //NOTE: nothing to draw on canvas just yet
+  }
+  update(){
+    //no-op for meeting
+  }
+  
+}
+
+
