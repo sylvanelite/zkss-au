@@ -5,6 +5,12 @@ export default class StatePlaying {
   constructor() {}
   
   init(){
+    let self = this;
+    
+    self.varCurrentTask="";      //when clicking  "do", this is populated with whatever you're looking at
+    self.varCurrentTaskId="";    //an additional param extracted from the QR code
+    
+    
     let playingTemplate = `
 	<div id="dvPlaying">
     <div id="dvPlayingCanvas">
@@ -20,7 +26,7 @@ export default class StatePlaying {
   </div>`;
   $("#main").append($(playingTemplate));
   $("#btnAction").on("click",function(){
-      Au.doAction(Au.varCurrentTask,Au.varCurrentTaskId);
+     self.doAction(self.varCurrentTask,self.varCurrentTaskId);
   });
   $("#iptImgFile").on("change",function(){
       Au.scanFromFile();
@@ -28,6 +34,7 @@ export default class StatePlaying {
     
   }
   render(){
+    let self = this;
     let fontFamily = ' system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial';
         if(!$("#dvPlaying").is(":visible")){
             $("#dvPlaying").show();
@@ -125,7 +132,7 @@ export default class StatePlaying {
         ctx.font = '16pt '+fontFamily;
         ctx.fillText(Au.varPlayers[Au.varPlayerId].playerTag+": "+Au.varPlayers[Au.varPlayerId].displayName,  10.5,28.5);
         //draw timer behind the action button
-        if(Au.varCurrentTask.length>0 && Au.varLookingAtTime>0){
+        if(self.varCurrentTask.length>0 && Au.varLookingAtTime>0){
             let btnWidth = $("#btnAction").width()+48;
             let btnX = $("#btnAction").position().left;
             let btnY = $("#btnAction").position().top;
@@ -138,10 +145,10 @@ export default class StatePlaying {
             ctx.fillRect(btnX, btnY-8, (btnWidth)*scale, 8);
         }
         
-        if($("#btnAction").attr("data-action")!=Au.varCurrentTask){
-            $("#btnAction").attr("data-action",Au.varCurrentTask);
-            if(Au.varCurrentTask.length>0){
-                $("#btnAction").text(Au.varCurrentTask);
+        if($("#btnAction").attr("data-action")!=self.varCurrentTask){
+            $("#btnAction").attr("data-action",self.varCurrentTask);
+            if(self.varCurrentTask.length>0){
+                $("#btnAction").text(self.varCurrentTask);
                 $("#btnAction").show();
             }else{
                 $("#btnAction").text("--");
@@ -154,6 +161,7 @@ export default class StatePlaying {
     $("#dvPlayingUI").hide();
   }
   update(){
+    let self=this;
     //read QR events
     
     //the camera has lost the QR code for more than a certain timeframe, clear the action
@@ -189,8 +197,8 @@ export default class StatePlaying {
     // player_[ID]
     // task_[TD]
     let qr = Au.varLookingAtQr;
-    Au.varCurrentTask = "";
-    Au.varCurrentTaskId = "";
+    self.varCurrentTask = "";
+    self.varCurrentTaskId = "";
     
     let qrKind = "";
     let qrId = "";
@@ -203,35 +211,166 @@ export default class StatePlaying {
     let isImposter = Au.varPlayers[Au.varPlayerId].isImposter;
     if(isImposter){
         if(qrKind == "player"){
-            Au.varCurrentTask = Au.TASKS.KILL;
-            Au.varCurrentTaskId = qrId;
+            self.varCurrentTask = Au.TASKS.KILL;
+            self.varCurrentTaskId = qrId;
         }
         if(qrKind == "task"){
-            Au.varCurrentTask = Au.TASKS.SABOTAGE;
-            Au.varCurrentTaskId = qrId;
+            self.varCurrentTask = Au.TASKS.SABOTAGE;
+            self.varCurrentTaskId = qrId;
         }
     }
     if(!isImposter){
         if(qrKind == "task"){
-            Au.varCurrentTask = Au.TASKS.TASK;
-            Au.varCurrentTaskId = qrId;
+            self.varCurrentTask = Au.TASKS.TASK;
+            self.varCurrentTaskId = qrId;
         }
         if(qrKind == "player"){
-            Au.varCurrentTask = Au.TASKS.INTERACT;
-            Au.varCurrentTaskId = qrId;
+            self.varCurrentTask = Au.TASKS.INTERACT;
+            self.varCurrentTaskId = qrId;
         }
     }
     //anyone can call the meeting
     if(qrKind == "meeting"){
-        Au.varCurrentTask = Au.TASKS.MEETING;
-        Au.varCurrentTaskId = "";
+        self.varCurrentTask = Au.TASKS.MEETING;
+        self.varCurrentTaskId = "";
     }
     //anyone can view logs
     if(qrKind == "log"){
-        Au.varCurrentTask = Au.TASKS.VIEW_LOG;
-        Au.varCurrentTaskId = "";
+        self.varCurrentTask = Au.TASKS.VIEW_LOG;
+        self.varCurrentTaskId = "";
     }
   }
+  
+  
+  
+  doAction (task,qrId){
+    if(task == Au.TASKS.KILL){
+        if(Au.varKillCooldown<=0){
+            let playerId = "";
+            let keys = Object.keys(Au.varPlayers);
+            for(let i=0;i<keys.length;i+=1){
+                let player = Au.varPlayers[keys[i]];
+                if(player.playerTag == qrId){
+                    playerId = player.id;
+                    if(player.isImposter){
+                        alert("Target is an imposter.");
+                        return;
+                    }
+                }
+            }
+            if(!playerId.length){
+                alert("Could not find player");
+                return;
+            }
+            Au.sendMessage(JSON.stringify({
+                kind:Au.EVENTS.KILL,
+                name:playerId,
+                from:Au.varPlayerId,
+            }));
+            Au.varKillCooldown=Au.TIME_BETWEEN_KILL;
+        }else{
+            alert("Cannot kill yet, need to wait:"+(Math.floor(Au.varKillCooldown/1000))+" seconds.");
+        }
+        return;
+    }
+    if(task == Au.TASKS.SABOTAGE){
+        Au.sendMessage(JSON.stringify({
+            kind:Au.EVENTS.SABOTAGE,
+            event:qrId
+        }));
+        return;
+    }
+    if(task == Au.TASKS.TASK){
+        //check if you've scanned a tag, if so, see if it's one of your tasks and begin the minigame
+        let keys = Object.keys(Au.varTasks);
+        for(let i=0;i<keys.length;i+=1){
+            let task = Au.varTasks[keys[i]];
+            if(task.owner == Au.varPlayerId){
+                //this is a task, see if it's something you're assigned with
+                if(task.name == qrId && !task.isStarted){
+                    if(task.SabotageCooldown>0){
+                        alert("task is sabotaged, wait: "+Math.floor(task.SabotageCooldown/1000)+" seconds");
+                        return;
+                    }
+                    //yes, it's something you can do: TODO: create more minigames
+                    $("#btnCloseTask").attr("data-task",keys[i]);
+                    Au.state = Au.states.stateTask;
+                    return;//only do 1 task at a time, even if multiple have the same tag
+                }
+            }
+        }
+        //else, if you got here, this minigame isn't one of yours
+        alert("You don't have to do this task");
+        return;
+    }
+    if(task == Au.TASKS.INTERACT){
+        //check if a task you've done can be handed in to a player
+        let keys = Object.keys(Au.varTasks);
+        for(let i=0;i<keys.length;i+=1){
+            let task = Au.varTasks[keys[i]];
+            if(task.owner == Au.varPlayerId){
+                if(task.isStarted && task.rewardPlayer == qrId){
+                    //task complete
+                      Au.sendMessage(JSON.stringify({
+                            kind:Au.EVENTS.CLEAR_TASK,
+                            key:keys[i]
+                        }));
+                      return;
+                }
+            }
+        }
+        
+        //else, if you got here it's not a task for you, so instead show the player status
+        let rewardPlayer = Au.varPlayers[Au.varPlayerId];
+        let playerKeys = Object.keys(Au.varPlayers);
+        for(let i=0;i<playerKeys.length;i+=1){
+            let player = Au.varPlayers[playerKeys[i]];
+            if(player.playerTag == task.rewardPlayer){
+                rewardPlayer = player;
+            }
+        }
+        if(rewardPlayer.isAlive){
+            alert(rewardPlayer.displayName+" is alive");
+        }else{
+            //can report a dead body as long as you're alive, no meeting cooldown needed (varMeetingCooldown)
+            if(!Au.varPlayers[Au.varPlayerId].isAlive){
+                alert(rewardPlayer.displayName+" is dead!\n call meeting?");
+                return;
+            }
+            let report = confirm(rewardPlayer.displayName+" is dead!\n call meeting?");
+            if(report){
+                Au.sendMessage(JSON.stringify({
+                      kind:Au.EVENTS.MEETING,
+                      host:Au.varPlayerId
+                  }));
+            }
+        }
+        
+    }
+    if(task == Au.TASKS.MEETING){
+        if(!Au.varPlayers[Au.varPlayerId].isAlive){
+            alert("can't call meeting, you're dead.");
+            return;
+        }
+        if(Au.varMeetingCooldown<=0){
+            let doMeeting = confirm("Call meeting?");
+            if(doMeeting){
+                Au.sendMessage(JSON.stringify({
+                      kind:Au.EVENTS.MEETING,
+                      host:Au.varPlayerId
+                  }));
+            }
+        }else{
+            alert("Cannot call meeting yet, need to wait:"+(Math.floor(Au.varMeetingCooldown/1000))+" seconds.");
+        }
+    }
+    if(task == Au.TASKS.VIEW_LOG){
+        Au.varLogMessages = [];
+        Au.state = Au.states.stateViewLog;
+    }
+    
+  }
+  
   
 }
 

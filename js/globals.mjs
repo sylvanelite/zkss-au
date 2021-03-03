@@ -10,8 +10,6 @@ export default  {
     varMessageBuffer:[],    //if multiple messages arrive between polls, they are buffered here
     varPlayerId:"",         //the ID of your player (alpha)
     varPlayers:{},          //list of player objects, stored by IDs
-    varCurrentTask:"",      //when clicking  "do", this is populated with whatever you're looking at
-    varCurrentTaskId:"",    //an additional param extracted from the QR code
     varTasks:{},            //list of tasks for every player, in the form playerId_idx
     varFakeTasks:[],            //if you're the imposter, these are generated just for rendering
     varVotes:[],                //count of global votes cast during a meeting
