@@ -3,7 +3,7 @@
 export default  {
 	BASE_URL:"./node/server.mjs",    //URL of the AJAX endpoint
     varArea:"42",           //filter out messages to only be from this room. currently unused.
-    varWaigingForMessage:false,//flag for when "get" is sent. In the event get takes longer than the poll timer, this will skip additional calls until the first has returned.
+    varWaitingForMessage:false,//flag for when "get" is sent. In the event get takes longer than the poll timer, this will skip additional calls until the first has returned.
     varMessagePollTime:1000,//time in ms between polling the server for messages
     varMessageId:0,         //ID for getting server messages up to this value
     getMessageTimer:0,      //timer that counts down between messages

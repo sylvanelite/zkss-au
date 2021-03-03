@@ -100,10 +100,10 @@ Au.sendMessage = function(jsonString){
 //pushes raw messges (strings) into the event queue and updates the message id
 //messageId can be used for debugging, but will usually be the most recent message id recieved
 Au.getMessage = function(messageId){
-    if(Au.varWaigingForMessage){
+    if(Au.varWaitingForMessage){
         return;
     }
-    Au.varWaigingForMessage = true;
+    Au.varWaitingForMessage = true;
     if(!messageId){
         messageId = Au.varMessageId;
     }
@@ -127,7 +127,7 @@ Au.getMessage = function(messageId){
                 }
             }
         }
-        Au.varWaigingForMessage = false;
+        Au.varWaitingForMessage = false;
     });
     
 };
