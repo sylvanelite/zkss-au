@@ -7,13 +7,17 @@ export default class StatePlaying {
   init(){
     let playingTemplate = `
 	<div id="dvPlaying">
-		<!--TODO: UI here-->
-		<label style="width:6em;height:6em;margin:1em;position:fixed;bottom:0px;line-height:4.5em;" class="btn btn-secondary align-middle" id="lblScan">
-			Scan
-			<input type="file" id="iptImgFile"style="display:none;"  capture="capture" >
-		</label>
-		<button id="btnAction" style="position:fixed;bottom:0px;right:0px;width:6em;height:6em;margin:1em;display:none;" class="btn btn-secondary"  data-action="">--</button>
-	</div>`;
+    <div id="dvPlayingCanvas">
+    </div>
+    <div id="dvPlayingUI">
+      <!--TODO: UI here-->
+      <label style="width:6em;height:6em;margin:1em;position:fixed;bottom:0px;line-height:4.5em;" class="btn btn-secondary align-middle" id="lblScan">
+        Scan
+        <input type="file" id="iptImgFile"style="display:none;"  capture="capture" >
+      </label>
+      <button id="btnAction" style="position:fixed;bottom:0px;right:0px;width:6em;height:6em;margin:1em;display:none;" class="btn btn-secondary"  data-action="">--</button>
+    </div>
+  </div>`;
   $("#main").append($(playingTemplate));
   $("#btnAction").on("click",function(){
       Au.doAction(Au.varCurrentTask,Au.varCurrentTaskId);
@@ -25,26 +29,19 @@ export default class StatePlaying {
   }
   render(){
     let fontFamily = ' system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial';
-        if($("#dvMainMenu").is(":visible")){
-            $("#dvMainMenu").hide();
-        }
-        if($("#dvLobby").is(":visible")){
-            $("#dvLobby").hide();
-        }
-        if($("#btnCloseTask").is(":visible")){
-            $("#btnCloseTask").hide();
-        }
-        
         if(!$("#dvPlaying").is(":visible")){
             $("#dvPlaying").show();
         }
+        if(!$("#dvPlayingUI").is(":visible")){
+            $("#dvPlayingUI").show();
+        }
+        if(!$("#dvPlayingCanvas").is(":visible")){
+            $("#dvPlayingCanvas").show();
+        }
+        
         if(!$("#lblScan").is(":visible")){
             $("#lblScan").show();
         }
-        if($("#dvMeeting").is(":visible")){
-            $("#dvMeeting").hide();
-        }
-        $(".minigame").hide();
         if(!Au.hasOwnProperty("canvas")){
             Au.canvas = document.createElement("canvas");
             Au.canvas.width = window.innerWidth;
@@ -53,7 +50,7 @@ export default class StatePlaying {
             Au.canvas.style.left="0px";
             Au.canvas.style.top="0px";
             Au.canvas.style.zIndex="-1";
-            $("#dvPlaying").prepend(Au.canvas);
+            $("#dvPlayingCanvas").append(Au.canvas);
         }
         let ctx = Au.canvas.getContext("2d");
         ctx.clearRect(0,0,Au.canvas.width,Au.canvas.height);
@@ -154,7 +151,7 @@ export default class StatePlaying {
     
   }
   hide(){
-    $("#dvPlaying").hide();
+    $("#dvPlayingUI").hide();
   }
   update(){
     //read QR events

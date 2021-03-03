@@ -68,16 +68,6 @@ export default class StateMeeting {
     $("#dvMeeting").hide();
   }
   render(){
-    if($("#btnCloseTask").is(":visible")){
-        $("#btnCloseTask").hide();
-    }
-    if($("#lblScan").is(":visible")){
-        $("#lblScan").hide();
-    }
-    if($("#btnAction").is(":visible")){
-        $("#btnAction").hide();
-    }
-    $(".minigame").hide();
     if(!$("#dvMeeting").is(":visible")){
         $("#dvMeeting").show();
         $(".voteItem").remove();

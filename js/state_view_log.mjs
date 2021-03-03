@@ -13,6 +13,9 @@ export default class StateViewLog {
     if(!$("#btnCloseTask").is(":visible")){
         $("#btnCloseTask").show();
     }
+    if(!$("#dvPlayingUI").is(":visible")){
+        $("#dvPlayingUI").show();
+    }
     let ctx = Au.canvas.getContext("2d");
     ctx.clearRect(0,0,Au.canvas.width,Au.canvas.height);
     //draw header

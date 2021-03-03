@@ -67,10 +67,6 @@ export default class StateLobby {
   }
   render(){
     $("#dvLobby").show();
-    $("#dvMainMenu").hide();
-    $("#dvPlaying").hide();
-    $("#dvMeeting").hide();
-    $(".minigame").hide();
     if($("#dvCurrentPlayers").attr("data-needsRefresh") == "true"){
         let dvPlayerText = "";
         let keys=Object.keys(Au.varPlayers);

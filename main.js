@@ -72,6 +72,12 @@ Au.logic = function(){
 };
 //main rendering
 Au.render = function(){
+    for (const state of Object.values(Au.states)) {
+      if(state!=Au.state){
+        state.hide();
+      }
+    }
+    
     Au.state.render();
 };
 
@@ -617,111 +623,10 @@ Au.resetMinigames =function(){
             Au.varTasks[task].isStarted = true;
         }
     };
-    //click all the buttons
-    $(".btnMinigameA").prop("disabled",false);
-    $(".btnMinigameA").off("click");
-    $(".btnMinigameA").on("click",function(){
-        $(this).attr("disabled","disabled");
-        if($("#btnMinigameA1").is(":disabled")&&
-           $("#btnMinigameA2").is(":disabled")&&
-           $("#btnMinigameA3").is(":disabled")){
-            doneTask();
-            $("#dvMinigameA").hide();
-        }
-    });
     
-    //make slider 2 match slider 1,3
-    let rngB = ["4","3","2","5"];//correct val  == 1, so anything but that
-    $("#iptMinigameB2").val(rngB[Math.floor(Math.random()*rngB.length)]);
-    $("#iptMinigameB2").off("change");
-    $("#iptMinigameB2").on("change",function(){
-        if($(this).val()=="1"){
-            doneTask();
-            $("#dvMinigameB").hide();
-        }
-    });
-    
-    //type code into box
-    $("#iptMinigameC1").val("");
-    let rngC = ["FDS","WER","BNM","IUY","VCX","ZZZ"];
-    $("#iptMinigameC2").text(rngC[Math.floor(Math.random()*rngC.length)]);
-    $("#iptMinigameC1").off("change");
-    $("#iptMinigameC1").on("change",function(){
-        let code = $.trim($("#iptMinigameC2").text()).toUpperCase();
-        if($("#iptMinigameC1").val().toUpperCase()==code){
-            doneTask();
-            $("#dvMinigameC").hide();
-        }
-    });
-    
-    //check all the switches
-    $("#iptMinigameD2").prop("checked",false);//always at least 1 unchecked
-    $("#iptMinigameD1").prop("checked",true);
-    $("#iptMinigameD3").prop("checked",Math.random()>0.5);
-    $(".iptMinigameDcheck").off("change");
-    $(".iptMinigameDcheck").on("change",function(){
-        if($("#iptMinigameD1").is(":checked")&&
-           $("#iptMinigameD2").is(":checked")&&
-           $("#iptMinigameD3").is(":checked")){
-            doneTask();
-            $("#dvMinigameD").hide();
-        }
-    });
-    
-    //click X number of times
-    $("#spnMinigameE1").text(2+Math.floor(Math.random()*3));
-    $("#dvMinigameE2").off("click");
-    $("#dvMinigameE2").on("click",function(){
-        let value = parseInt($("#spnMinigameE1").text(),10);
-        value-=1;
-        if(value <=0){
-            doneTask();
-            $("#dvMinigameE").hide();
-        }else{
-            $("#spnMinigameE1").text(value);
-        }
-    });
-    
-    //do addition
-    $("#spnMinigameF1").text(Math.floor(Math.random()*10));
-    $("#spnMinigameF2").text(Math.floor(Math.random()*10));
-    $("#spnMinigameF3").off("change");
-    $("#spnMinigameF3").on("change",function(){
-        let value = parseInt($("#spnMinigameF3").val(),10);
-        let res1 = parseInt($("#spnMinigameF1").text(),10);
-        let res2 = parseInt($("#spnMinigameF2").text(),10);
-        if( res1+res2 == value){
-            doneTask();
-            $("#dvMinigameF").hide();
-        }
-    });
-    //do subtratction
-    $("#spnMinigameG1").text(Math.floor(7+Math.random()*7));
-    $("#spnMinigameG2").text(Math.floor(Math.random()*7));
-    $("#spnMinigameG3").off("change");
-    $("#spnMinigameG3").on("change",function(){
-        let value = parseInt($("#spnMinigameG3").val(),10);
-        let res1 = parseInt($("#spnMinigameG1").text(),10);
-        let res2 = parseInt($("#spnMinigameG2").text(),10);
-        if( res1-res2 == value){
-            doneTask();
-            $("#dvMinigameG").hide();
-        }
-    });
-    //do multiplication
-    $("#spnMinigameH1").text(Math.floor(2+Math.random()*4));
-    $("#spnMinigameH2").text(Math.floor(2+Math.random()*7));
-    $("#spnMinigameH3").off("change");
-    $("#spnMinigameH3").on("change",function(){
-        let value = parseInt($("#spnMinigameH3").val(),10);
-        let res1 = parseInt($("#spnMinigameH1").text(),10);
-        let res2 = parseInt($("#spnMinigameH2").text(),10);
-        if( res1*res2 == value){
-            doneTask();
-            $("#dvMinigameH").hide();
-        }
-    });
-    
+    for(let i=0;i<Au.states.stateTask.minigames.length;i+=1){
+      Au.states.stateTask.minigames[i].reset(doneTask);
+    }
     
 };
 
