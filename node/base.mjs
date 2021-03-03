@@ -1,6 +1,6 @@
 
 
-class Base {
+export default class Base {
   constructor() {
   }
   generateState(){
@@ -11,4 +11,4 @@ class Base {
   
 }
 
-export {Base};
+
