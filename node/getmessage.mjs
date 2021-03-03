@@ -1,11 +1,16 @@
 //get message
 
+import Base from "./base.mjs";
+
 export default function(request,response,client) {
 	var responseObj = {
 		success:false,
 		data:{}
 	};
     try{
+        let state = new Base();
+        console.log(state.generateState());
+        
 			if(!request.query.hasOwnProperty("api")){
                 response.send("param not found");
 			}else{        
