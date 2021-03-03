@@ -1,6 +1,6 @@
 //get message
 
-import * from "./base.mjs";
+import Base from "./baseaaa.mjs";
 
 export default function(request,response,client) {
 	var responseObj = {
