@@ -3,7 +3,12 @@
 import Base from "./base.mjs";
 import Au from "../js/globals.mjs";
 
+/*
+Table structure:
 
+CREATE TABLE messages (id SERIAL PRIMARY KEY, message text, area text)
+
+*/
 
 export default function(request,response,client) {
 	var responseObj = {
@@ -24,7 +29,7 @@ export default function(request,response,client) {
 					//TODO: nukes the whole table....
 						client.connect().then( function(){
 								client.query(' DELETE FROM messages ' )
-								.then(function(result){
+								.then(function(){
 									responseObj.success = true;
 									responseObj.data = "reset successful";
 									client.end();
@@ -50,7 +55,7 @@ export default function(request,response,client) {
 						client.connect().then(
 							function(){
 								client.query(' INSERT INTO messages(message,area) values ($1,$2) ',[message,area])
-								.then(function(result){
+								.then(function(){
 									responseObj.success = true;
 									responseObj.data = "added message";
 									client.end();
