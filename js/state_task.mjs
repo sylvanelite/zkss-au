@@ -125,7 +125,7 @@ export default class StateTask {
 	
 	
 	<!--end minigames-->
-	<button id="btnCloseTask" style="display:none;position:fixed;bottom:0px;width:6em;height:6em;margin:1em;" class="btn btn-secondary" data-task="">Close</button>
+	<button id="btnCloseTask" style="position:fixed;bottom:0px;width:6em;height:6em;margin:1em;" class="btn btn-secondary" data-task="">Close</button>
 	
 	
 	</div>`;
