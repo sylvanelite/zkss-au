@@ -9,6 +9,9 @@ export default class StatePlaying {
     this.varKillCooldown = 0;
     //populated with whatever QR code is currently being looked at
     this.varLookingAtQr = Au.TIME_LOOK_AT;
+    
+    
+    this.varFakeTasks = [];//if you're the imposter, these are generated just for rendering
   }
   
   init(){
@@ -111,7 +114,7 @@ export default class StatePlaying {
         }
         //--draw fake tasks
         if(Au.varPlayers[Au.varPlayerId].isImposter ){
-            if(Au.varFakeTasks.length==0){
+            if(self.varFakeTasks.length==0){
                 let generateFakeTask = function(){
                     let task = {name:""};
                     let names =  ["A","B","C","D","E","F","G","H"];
@@ -120,11 +123,11 @@ export default class StatePlaying {
                     return task;
                 };
                 for(let i=0;i<Au.TASK_NUMBER;i+=1){
-                    Au.varFakeTasks.push(generateFakeTask());
+                    self.varFakeTasks.push(generateFakeTask());
                 }
             }
-            for(let i=0;i<Au.varFakeTasks.length;i+=1){
-                let text = "Fake: "+Au.varFakeTasks[i].name+" "+Au.varFakeTasks[i].description;
+            for(let i=0;i<self.varFakeTasks.length;i+=1){
+                let text = "Fake: "+self.varFakeTasks[i].name+" "+self.varFakeTasks[i].description;
                 ctx.fillStyle = "#FFFFFF";
                 ctx.fillText(text, 10+0.5, taskY+0.5);
                 taskY+=24;

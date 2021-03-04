@@ -11,7 +11,6 @@ export default  {
     varPlayerId:"",         //the ID of your player (alpha)
     varPlayers:{},          //list of player objects, stored by IDs
     varTasks:{},            //list of tasks for every player, in the form playerId_idx
-    varFakeTasks:[],            //if you're the imposter, these are generated just for rendering
     varVotes:[],                //count of global votes cast during a meeting
     TIME_BETWEEN_MEETING:30000, //30 seconds between entering a meeting and calling another
     TIME_BETWEEN_KILL:30000,    //30 seconds between kills for imposter
