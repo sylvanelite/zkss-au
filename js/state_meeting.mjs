@@ -75,9 +75,10 @@ export default class StateMeeting {
         $("#dvMeeting").show();
         $(".voteItem").remove();
         //refresh with meeting options
-        let playerKeys = Object.keys(Au.varPlayers);
+        let allPlayers = Au.middleware.getAllPlayers();
+        let playerKeys = Object.keys(allPlayers);
         for(let i=0;i<playerKeys.length;i+=1){
-            let player = Au.varPlayers[playerKeys[i]];
+            let player = allPlayers[playerKeys[i]];
             if(player.isAlive){
                 let hostIndicator = "";
                 if(player.id == self.varMeetingHost){
@@ -101,6 +102,8 @@ export default class StateMeeting {
         }
         //show progress level
         //<progress id="prgTasks" max="100" value="0"> 0% </progress>
+        /*
+        //TODO: progress bar, note: if theres only 1 imposter 0 tasks will be populated
         let taskKeys = Object.keys(Au.varTasks);
         let max = taskKeys.length;
         let cur = 0 ;
@@ -115,6 +118,7 @@ export default class StateMeeting {
         $("#prgTasks").text(progress+"%");
         //show the disabled button
         $("#btnVote").prop("disabled",false);
+        */
     }
     let ctx = Au.canvas.getContext("2d");
     ctx.clearRect(0,0,Au.canvas.width,Au.canvas.height);

@@ -9,9 +9,6 @@ export default  {
     getMessageTimer:0,      //timer that counts down between messages
     varMessageBuffer:[],    //if multiple messages arrive between polls, they are buffered here
     varPlayerId:"",         //the ID of your player (alpha)
-    varPlayers:{},          //list of player objects, stored by IDs
-    varTasks:{},            //list of tasks for every player, in the form playerId_idx
-    varVotes:[],                //count of global votes cast during a meeting
     TIME_BETWEEN_MEETING:30000, //30 seconds between entering a meeting and calling another
     TIME_BETWEEN_KILL:30000,    //30 seconds between kills for imposter
     TIME_BETWEEN_SABOTAGE:30000,//duration of sabotaged events
@@ -39,7 +36,7 @@ export default  {
         VIEW_LOG:"Logs"
     },
     /*
-    runtime additions:
+    runtime additions (client only): 
     Au.states = {};
     Au.states.stateLobby = new StateLobby();
     Au.states.stateMainMenu = new StateMainMenu();

@@ -35,14 +35,13 @@ export default class StateLobby {
             alert("Enter a name first.");
             return;
         }
-        //parse out non alphanumeric
-        Au.varPlayers[Au.varPlayerId].displayName=name.replace(/\W/g, '');
+        name=name.replace(/\W/g, '');//parse out non alphanumeric
         $("#btnPlayerJoin").attr("disabled","disabled");
         $("#iptPlayerName").attr("disabled","disabled");
         $("#btnStart").prop("disabled",false);
         Au.sendMessage(JSON.stringify({
             kind:Au.EVENTS.JOIN,
-            playername:Au.varPlayers[Au.varPlayerId].displayName,
+            playername:name,
             id:Au.varPlayerId
         }));
     });
@@ -69,13 +68,15 @@ export default class StateLobby {
     $("#dvLobby").show();
     if($("#dvCurrentPlayers").attr("data-needsRefresh") == "true"){
         let dvPlayerText = "";
-        let keys=Object.keys(Au.varPlayers);
+        let players = Au.middleware.getAllPlayers();
+        let keys=Object.keys(players);
         for(let i=0;i<keys.length;i+=1){
+            let player = players[keys[i]];
+            let text = player.displayName;
             if(keys[i] == Au.varPlayerId){
-                continue;
+                text+="*";
             }
-            let player = Au.varPlayers[keys[i]];
-            dvPlayerText+="<li  class='list-group-item list-group-item-primary'>"+player.displayName+"</li>";
+            dvPlayerText+="<li  class='list-group-item list-group-item-primary'>"+text+"</li>";
         }
         $("#dvCurrentPlayers").html("<ul  class='list-group list-group-flush'>"+dvPlayerText+"</ul>");
         $("#dvRoomName").text("ROOM: "+Au.varArea);

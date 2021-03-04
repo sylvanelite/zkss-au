@@ -63,21 +63,14 @@ export default class StateTask {
     let ctx = Au.canvas.getContext("2d");
     ctx.clearRect(0,0,Au.canvas.width,Au.canvas.height);
     let taskKey = $("#btnCloseTask").attr("data-task");
-    let task = Au.varTasks[taskKey];
+    let task = Au.middleware.getTask(taskKey);
     if(!task.isStarted &&
        !$("#dvMinigame"+task.name).is(":visible")){
         //show the minigame
         $("#dvMinigame"+task.name).show();
         Au.resetMinigames();
     }
-    let rewardPlayer = Au.varPlayers[Au.varPlayerId];
-    let playerKeys = Object.keys(Au.varPlayers);
-    for(let i=0;i<playerKeys.length;i+=1){
-        let player = Au.varPlayers[playerKeys[i]];
-        if(player.playerTag == task.rewardPlayer){
-            rewardPlayer = player;
-        }
-    }
+    let rewardPlayer = Au.middleware.getPlayerByTag(task.rewardPlayer);
     ctx.font = "16pt "+fontFamily;
     ctx.fillStyle = "#FFFFFF";
     ctx.fillText("Task has been started.", 32.5, 32.5);
@@ -89,7 +82,7 @@ export default class StateTask {
     if(!taskKey.length){
         alert("no task!");//should not get here
     }
-    let task = Au.varTasks[taskKey];
+    let task =  Au.middleware.getTask(taskKey);
     if($("#dvMinigame"+task.name).length==0){//if there's no minigame, mark it as clear immediately.
         task.isStarted = true;
         console.log("skipping task: ",task);

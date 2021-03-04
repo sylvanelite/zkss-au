@@ -45,6 +45,7 @@ export default class StatePlaying {
   }
   render(){
     let self = this;
+    let selfPlayer = Au.middleware.getPlayer(Au.varPlayerId);
     let fontFamily = ' system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial';
         if(!$("#dvPlaying").is(":visible")){
             $("#dvPlaying").show();
@@ -77,48 +78,37 @@ export default class StatePlaying {
         
         
         //--draw tasks
-        let keys =Object.keys(Au.varTasks);
         ctx.font = "16pt "+fontFamily;
         let taskY = 48;
-        for(let i=0;i<keys.length;i+=1){
-            let taskId = keys[i];
-            let playerId = taskId.split("_")[0];
-            let task =  Au.varTasks[taskId];
-            if(playerId==Au.varPlayerId){
-                let text = "Task: "+task.name+" "+task.description;
-                let rewardPlayer = Au.varPlayers[Au.varPlayerId];
-                let playerKeys = Object.keys(Au.varPlayers);
-                for(let i=0;i<playerKeys.length;i+=1){
-                    let player = Au.varPlayers[playerKeys[i]];
-                    if(player.playerTag == task.rewardPlayer){
-                        rewardPlayer = player;
-                    }
-                }
-                ctx.fillStyle = "#FFFFFF";
-                if(!Au.varPlayers[Au.varPlayerId].isAlive){
-                    ctx.fillStyle = "#873333";//red text to indicate you've been killed
-                }
-                if(task.isStarted){
-                    ctx.fillStyle = "#cccc00";
-                    text +=" ("+rewardPlayer.playerTag+" "+rewardPlayer.displayName+")";
-                }
-                if(task.isClear){
-                    ctx.fillStyle = "#338833";
-                    if(!Au.varPlayers[Au.varPlayerId].isAlive){
-                        ctx.fillStyle = "#843281";//pruple text to indicate you've been killed
-                    }
-                }
-                ctx.fillText(text, 10+0.5, taskY+0.5);
-                taskY+=24;
+        let tasks = Au.middleware.getTasksForPlayer(Au.varPlayerId);
+        for(let i=0;i<tasks.length;i+=1){
+            let task = tasks[i];
+            let text = "Task: "+task.name+" "+task.description;
+            let rewardPlayer = Au.middleware.getPlayerByTag( task.rewardPlayer);
+            ctx.fillStyle = "#FFFFFF";
+            if(!selfPlayer.isAlive){
+                ctx.fillStyle = "#873333";//red text to indicate you've been killed
             }
+            if(task.isStarted){
+                ctx.fillStyle = "#cccc00";
+                text +=" ("+rewardPlayer.playerTag+" "+rewardPlayer.displayName+")";
+            }
+            if(task.isClear){
+                ctx.fillStyle = "#338833";
+                if(!selfPlayer.isAlive){
+                    ctx.fillStyle = "#843281";//pruple text to indicate you've been killed
+                }
+            }
+            ctx.fillText(text, 10+0.5, taskY+0.5);
+            taskY+=24;
         }
         //--draw fake tasks
-        if(Au.varPlayers[Au.varPlayerId].isImposter ){
+        if(selfPlayer.isImposter ){
             if(self.varFakeTasks.length==0){
                 let generateFakeTask = function(){
                     let task = {name:""};
                     let names =  ["A","B","C","D","E","F","G","H"];
-                    task.name = names[Math.floor(Au.PRNG()*names.length)];
+                    task.name = names[Math.floor(Math.random()*names.length)];
                     task.description= "";
                     return task;
                 };
@@ -134,13 +124,13 @@ export default class StatePlaying {
             }
         }
         //draw your name/status
-        if(Au.varPlayers[Au.varPlayerId].isImposter){
+        if(selfPlayer.isImposter){
             ctx.fillStyle = "#883333";
         }else{
             ctx.fillStyle = "#338833"; 
         }
         ctx.font = '16pt '+fontFamily;
-        ctx.fillText(Au.varPlayers[Au.varPlayerId].playerTag+": "+Au.varPlayers[Au.varPlayerId].displayName,  10.5,28.5);
+        ctx.fillText(selfPlayer.playerTag+": "+selfPlayer.displayName,  10.5,28.5);
         //draw timer behind the action button
         if(self.varCurrentTask.length>0 && self.varLookingAtTime>0){
             let btnWidth = $("#btnAction").width()+48;
@@ -172,6 +162,7 @@ export default class StatePlaying {
   }
   update(){
     let self=this;
+    let selfPlayer = Au.middleware.getPlayer(Au.varPlayerId);
     //read QR events
     
     //the camera has lost the QR code for more than a certain timeframe, clear the action
@@ -192,16 +183,14 @@ export default class StatePlaying {
         self.varKillCooldown = 0;
     }
     //update your sabotaged cooldowns
-    let keys = Object.keys(Au.varTasks);
-    for(let i=0;i<keys.length;i+=1){
-        let task = Au.varTasks[keys[i]];
-        if(task.owner == Au.varPlayerId){
-            if(task.SabotageCooldown>0){
-                task.SabotageCooldown -= 15;
-           }else{
-               task.SabotageCooldown=0;
-           }
-        }
+    let tasks = Au.middleware.getTasksForPlayer(Au.varPlayerId);
+    for(let i=0;i<tasks.length;i+=1){
+        let task = tasks[i];
+        if(task.SabotageCooldown>0){
+            task.SabotageCooldown -= 15;
+       }else{
+           task.SabotageCooldown=0;
+       }
     }
     //QR codes have the values:
     // player_[ID]
@@ -218,7 +207,7 @@ export default class StatePlaying {
     }else{
         return;//nothing in target, skip doing anything
     }
-    let isImposter = Au.varPlayers[Au.varPlayerId].isImposter;
+    let isImposter = selfPlayer.isImposter;
     if(isImposter){
         if(qrKind == "player"){
             self.varCurrentTask = Au.TASKS.KILL;
@@ -255,27 +244,21 @@ export default class StatePlaying {
   
   doAction (task,qrId){
     let self = this;
+    let selfPlayer = Au.middleware.getPlayer(Au.varPlayerId);
     if(task == Au.TASKS.KILL){
         if(self.varKillCooldown<=0){
-            let playerId = "";
-            let keys = Object.keys(Au.varPlayers);
-            for(let i=0;i<keys.length;i+=1){
-                let player = Au.varPlayers[keys[i]];
-                if(player.playerTag == qrId){
-                    playerId = player.id;
-                    if(player.isImposter){
-                        alert("Target is an imposter.");
-                        return;
-                    }
-                }
+            let targetPlayer = Au.middleware.getPlayerByTag(qrId);
+            if(targetPlayer.isImposter){
+                alert("Target is an imposter.");
+                return;
             }
-            if(!playerId.length){
+            if(!targetPlayer.id){
                 alert("Could not find player");
                 return;
             }
             Au.sendMessage(JSON.stringify({
                 kind:Au.EVENTS.KILL,
-                name:playerId,
+                name:targetPlayer.id,
                 from:Au.varPlayerId,
             }));
             self.varKillCooldown=Au.TIME_BETWEEN_KILL;
@@ -293,21 +276,19 @@ export default class StatePlaying {
     }
     if(task == Au.TASKS.TASK){
         //check if you've scanned a tag, if so, see if it's one of your tasks and begin the minigame
-        let keys = Object.keys(Au.varTasks);
-        for(let i=0;i<keys.length;i+=1){
-            let task = Au.varTasks[keys[i]];
-            if(task.owner == Au.varPlayerId){
-                //this is a task, see if it's something you're assigned with
-                if(task.name == qrId && !task.isStarted){
-                    if(task.SabotageCooldown>0){
-                        alert("task is sabotaged, wait: "+Math.floor(task.SabotageCooldown/1000)+" seconds");
-                        return;
-                    }
-                    //yes, it's something you can do: TODO: create more minigames
-                    $("#btnCloseTask").attr("data-task",keys[i]);
-                    Au.state = Au.states.stateTask;
-                    return;//only do 1 task at a time, even if multiple have the same tag
+        let tasks = Au.middleware.getTasksForPlayer(Au.varPlayerId);
+        for(let i=0;i<tasks.length;i+=1){
+            let task = tasks[i];
+            //this is a task, see if it's something you're assigned with
+            if(task.name == qrId && !task.isStarted){
+                if(task.SabotageCooldown>0){
+                    alert("task is sabotaged, wait: "+Math.floor(task.SabotageCooldown/1000)+" seconds");
+                    return;
                 }
+                //yes, it's something you can do: TODO: create more minigames
+                $("#btnCloseTask").attr("data-task",task.key);
+                Au.state = Au.states.stateTask;
+                return;//only do 1 task at a time, even if multiple have the same tag
             }
         }
         //else, if you got here, this minigame isn't one of yours
@@ -316,36 +297,27 @@ export default class StatePlaying {
     }
     if(task == Au.TASKS.INTERACT){
         //check if a task you've done can be handed in to a player
-        let keys = Object.keys(Au.varTasks);
-        for(let i=0;i<keys.length;i+=1){
-            let task = Au.varTasks[keys[i]];
-            if(task.owner == Au.varPlayerId){
-                if(task.isStarted && task.rewardPlayer == qrId){
-                    //task complete
-                      Au.sendMessage(JSON.stringify({
-                            kind:Au.EVENTS.CLEAR_TASK,
-                            key:keys[i]
-                        }));
-                      return;
-                }
-            }
+        let tasks = Au.middleware.getTasksForPlayer(Au.varPlayerId);
+        for(let i=0;i<tasks.length;i+=1){
+            let task = tasks[i];
+              if(task.isStarted && task.rewardPlayer == qrId){
+                  //task complete
+                    Au.sendMessage(JSON.stringify({
+                          kind:Au.EVENTS.CLEAR_TASK,
+                          key:task.key
+                      }));
+                    return;
+              }
         }
         
         //else, if you got here it's not a task for you, so instead show the player status
-        let rewardPlayer = Au.varPlayers[Au.varPlayerId];
-        let playerKeys = Object.keys(Au.varPlayers);
-        for(let i=0;i<playerKeys.length;i+=1){
-            let player = Au.varPlayers[playerKeys[i]];
-            if(player.playerTag == task.rewardPlayer){
-                rewardPlayer = player;
-            }
-        }
+        let rewardPlayer = Au.middleware.getPlayerByTag(task.rewardPlayer);
         if(rewardPlayer.isAlive){
             alert(rewardPlayer.displayName+" is alive");
         }else{
             //can report a dead body as long as you're alive, no meeting cooldown needed (varMeetingCooldown)
-            if(!Au.varPlayers[Au.varPlayerId].isAlive){
-                alert(rewardPlayer.displayName+" is dead!\n call meeting?");
+            if(!selfPlayer.isAlive){
+                alert(rewardPlayer.displayName+" is dead!\n You're dead too, can't report");
                 return;
             }
             let report = confirm(rewardPlayer.displayName+" is dead!\n call meeting?");
@@ -359,7 +331,7 @@ export default class StatePlaying {
         
     }
     if(task == Au.TASKS.MEETING){
-        if(!Au.varPlayers[Au.varPlayerId].isAlive){
+        if(!selfPlayer.isAlive){
             alert("can't call meeting, you're dead.");
             return;
         }
