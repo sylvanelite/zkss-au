@@ -1,10 +1,18 @@
 
 import Au from "./globals.mjs";
 import BaseMiddleware from "./middleware_base.mjs";
+
+
+
+import ServerMiddleware from "./middleware_server.mjs";//TDOO: remove this 
 //use for interacting with the game model via the client-side version of the game
 export default  class ClientMiddleware extends BaseMiddleware {
   constructor() {
     super();
+    this.tempServer = new ServerMiddleware();
+    this.tempServer.model = this.model;
+    
+    
   }
   join(id,playername){
     super.join(id,playername);
@@ -36,6 +44,9 @@ export default  class ClientMiddleware extends BaseMiddleware {
     if(from == Au.varPlayerId){
         alert("you have killed: "+self.model.varPlayers[player].displayName);
     }
+    //TODO: this should be on the server:
+     this.tempServer.killPlayer(player,from);
+    
   }
   
   hostMeeting(host){
@@ -94,13 +105,18 @@ export default  class ClientMiddleware extends BaseMiddleware {
       });//kill will check the number of alive characters left
       Au.state = Au.states.statePlaying;
     }
+    //TODO: this should be on the server
     if(tally.result == self.VOTE_RESULTS.IMPOSTER_WIN){
         //Game over, imposters win with a majority
         alert("Game over, imposters win");
         return;
     }
-    
-    
+  }
+  //TODO: this should be on the server
+  clearTask(key){
+    super.clearTask(key);
+    let self = this;
+    self.tempServer.clearTask(key);
   }
   
     
