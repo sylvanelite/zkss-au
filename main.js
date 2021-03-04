@@ -32,8 +32,6 @@ Au.init = function(){
     }
 
     Au.state = Au.states.stateMainMenu;
-    console.log(Au);
-    
     //starts the main loops running
     Au.renderLoop();
     
@@ -77,7 +75,6 @@ Au.render = function(){
         state.hide();
       }
     }
-    
     Au.state.render();
 };
 
@@ -330,10 +327,10 @@ Au.evtKill = function(json){
 //meeting [host]
 //--cancel tasks, show vote
 Au.evtMeeting = function(json){
-    Au.varMeetingHost = json.host;
+    Au.states.stateMeeting.varMeetingHost = json.host;
     Au.varVotes = [];
     Au.state = Au.states.stateMeeting;
-    Au.varMeetingCooldown = Au.TIME_BETWEEN_MEETING;
+    Au.states.statePlaying.varMeetingCooldown = Au.TIME_BETWEEN_MEETING;
 };
 //sabotage [event]
 //--event can either be a [task_id] or a gloabl callout
@@ -430,14 +427,14 @@ Au.evtTagInfo = function(json){
     let displayName = Au.varPlayers[json.name].displayName;
     if(Au.state == Au.states.stateViewLog){
         let logText = displayName+", scanned: "+json.tag;
-        Au.varLogMessages.unshift(logText);//push message into the start of the array
+        Au.states.stateViewLog.varLogMessages.unshift(logText);//push message into the start of the array
     }
 };
 
 //---local events
 Au.handleQR = function(result){
-    Au.varLookingAtQr = result;
-    Au.varLookingAtTime = Au.TIME_LOOK_AT;//have 3 seconds to act while the QR code is dropped
+    Au.states.statePlaying.varLookingAtQr = result;
+    Au.states.statePlaying.varLookingAtTime = Au.TIME_LOOK_AT;//have 3 seconds to act while the QR code is dropped
     
     //send tag scan notification to other players (passive notification)
     Au.sendMessage(JSON.stringify({
@@ -522,7 +519,7 @@ window.onload = Au.init;
 
 
 
-
+console.log(Au);
 
 
 

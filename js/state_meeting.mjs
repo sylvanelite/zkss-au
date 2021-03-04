@@ -2,7 +2,9 @@
 import Au from "./globals.mjs";
 
 export default class StateMeeting {
-  constructor() {}
+  constructor() {
+    this.varMeetingHost = "";
+  }
   
   init(){
     let meetingTemplate = `
@@ -68,6 +70,7 @@ export default class StateMeeting {
     $("#dvMeeting").hide();
   }
   render(){
+    let self = this;
     if(!$("#dvMeeting").is(":visible")){
         $("#dvMeeting").show();
         $(".voteItem").remove();
@@ -77,7 +80,7 @@ export default class StateMeeting {
             let player = Au.varPlayers[playerKeys[i]];
             if(player.isAlive){
                 let hostIndicator = "";
-                if(player.id == Au.varMeetingHost){
+                if(player.id == self.varMeetingHost){
                     hostIndicator="*";
                 }
                 $("#dvMeetingVote").prepend($(`

@@ -2,7 +2,14 @@
 import Au from "./globals.mjs";
 
 export default class StatePlaying {
-  constructor() {}
+  constructor() {
+    //timers: counts down 15ms per game tick, refreshed every game loop (note alerts might block this)
+    this.varLookingAtTime = 0;
+    this.varMeetingCooldown = 0;
+    this.varKillCooldown = 0;
+    //populated with whatever QR code is currently being looked at
+    this.varLookingAtQr = Au.TIME_LOOK_AT;
+  }
   
   init(){
     let self = this;
@@ -132,12 +139,12 @@ export default class StatePlaying {
         ctx.font = '16pt '+fontFamily;
         ctx.fillText(Au.varPlayers[Au.varPlayerId].playerTag+": "+Au.varPlayers[Au.varPlayerId].displayName,  10.5,28.5);
         //draw timer behind the action button
-        if(self.varCurrentTask.length>0 && Au.varLookingAtTime>0){
+        if(self.varCurrentTask.length>0 && self.varLookingAtTime>0){
             let btnWidth = $("#btnAction").width()+48;
             let btnX = $("#btnAction").position().left;
             let btnY = $("#btnAction").position().top;
             
-            let scale = Au.varLookingAtTime/Au.TIME_LOOK_AT;
+            let scale = self.varLookingAtTime/Au.TIME_LOOK_AT;
             
             ctx.fillStyle = "#000000";
             ctx.fillRect(btnX, btnY-8, (btnWidth), 8);
@@ -165,21 +172,21 @@ export default class StatePlaying {
     //read QR events
     
     //the camera has lost the QR code for more than a certain timeframe, clear the action
-    if( Au.varLookingAtTime>0){
-         Au.varLookingAtTime -= 15;
+    if( self.varLookingAtTime>0){
+         self.varLookingAtTime -= 15;
     }else{
-        Au.varLookingAtTime = 0;
-        Au.varLookingAtQr = "";
+        self.varLookingAtTime = 0;
+        self.varLookingAtQr = "";
     }
-    if( Au.varMeetingCooldown>0){
-         Au.varMeetingCooldown -= 15;
+    if( self.varMeetingCooldown>0){
+         self.varMeetingCooldown -= 15;
     }else{
-        Au.varMeetingCooldown = 0;
+        self.varMeetingCooldown = 0;
     }
-    if( Au.varKillCooldown>0){
-         Au.varKillCooldown -= 15;
+    if( self.varKillCooldown>0){
+         self.varKillCooldown -= 15;
     }else{
-        Au.varKillCooldown = 0;
+        self.varKillCooldown = 0;
     }
     //update your sabotaged cooldowns
     let keys = Object.keys(Au.varTasks);
@@ -196,7 +203,7 @@ export default class StatePlaying {
     //QR codes have the values:
     // player_[ID]
     // task_[TD]
-    let qr = Au.varLookingAtQr;
+    let qr = self.varLookingAtQr;
     self.varCurrentTask = "";
     self.varCurrentTaskId = "";
     
@@ -244,8 +251,9 @@ export default class StatePlaying {
   
   
   doAction (task,qrId){
+    let self = this;
     if(task == Au.TASKS.KILL){
-        if(Au.varKillCooldown<=0){
+        if(self.varKillCooldown<=0){
             let playerId = "";
             let keys = Object.keys(Au.varPlayers);
             for(let i=0;i<keys.length;i+=1){
@@ -267,9 +275,9 @@ export default class StatePlaying {
                 name:playerId,
                 from:Au.varPlayerId,
             }));
-            Au.varKillCooldown=Au.TIME_BETWEEN_KILL;
+            self.varKillCooldown=Au.TIME_BETWEEN_KILL;
         }else{
-            alert("Cannot kill yet, need to wait:"+(Math.floor(Au.varKillCooldown/1000))+" seconds.");
+            alert("Cannot kill yet, need to wait:"+(Math.floor(self.varKillCooldown/1000))+" seconds.");
         }
         return;
     }
@@ -352,7 +360,7 @@ export default class StatePlaying {
             alert("can't call meeting, you're dead.");
             return;
         }
-        if(Au.varMeetingCooldown<=0){
+        if(self.varMeetingCooldown<=0){
             let doMeeting = confirm("Call meeting?");
             if(doMeeting){
                 Au.sendMessage(JSON.stringify({
@@ -361,11 +369,11 @@ export default class StatePlaying {
                   }));
             }
         }else{
-            alert("Cannot call meeting yet, need to wait:"+(Math.floor(Au.varMeetingCooldown/1000))+" seconds.");
+            alert("Cannot call meeting yet, need to wait:"+(Math.floor(self.varMeetingCooldown/1000))+" seconds.");
         }
     }
     if(task == Au.TASKS.VIEW_LOG){
-        Au.varLogMessages = [];
+        Au.states.stateViewLog.varLogMessages = [];
         Au.state = Au.states.stateViewLog;
     }
     

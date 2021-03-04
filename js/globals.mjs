@@ -13,12 +13,6 @@ export default  {
     varTasks:{},            //list of tasks for every player, in the form playerId_idx
     varFakeTasks:[],            //if you're the imposter, these are generated just for rendering
     varVotes:[],                //count of global votes cast during a meeting
-    varMeetingHost: "",         //global host of the meeting
-    varLookingAtQr:"",          //populated with whatever QR code is currently being looked at
-    varLookingAtTime:0,         //timers: counts down 15ms per game tick, refreshed every game loop (note alerts might block this)
-    varKillCooldown:0,
-    varMeetingCooldown:0,
-    varLogMessages:[],          //buffer for when viewing the logs
     TIME_BETWEEN_MEETING:30000, //30 seconds between entering a meeting and calling another
     TIME_BETWEEN_KILL:30000,    //30 seconds between kills for imposter
     TIME_BETWEEN_SABOTAGE:30000,//duration of sabotaged events

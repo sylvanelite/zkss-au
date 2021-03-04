@@ -29,7 +29,7 @@ export default class StateTask {
         Au.state = Au.states.statePlaying;
       $("#btnCloseTask").attr("data-task","");
       //clear out whatever was selected before
-      Au.varLookingAtTime = 0;
+      Au.states.statePlaying.varLookingAtTime = 0;
   });
     this.minigames = [
       new MinigameA(),
