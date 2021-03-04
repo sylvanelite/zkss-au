@@ -1,13 +1,8 @@
 //get message
 
-import Base from "./base.mjs";
-import Au from "../js/globals.mjs";
-
 /*
-Table structure:
-
+Table structure (postgres)
 CREATE TABLE messages (id SERIAL PRIMARY KEY, message text, area text)
-
 */
 
 export default function(request,response,client) {
