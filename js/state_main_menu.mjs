@@ -28,7 +28,7 @@ export default class StateMainMenu {
         Au.varArea = Au.getRandomString(3);
         //TODO: this nukes the entire server, not just the current area
         //NOTE: this means clicking "create" will nuke currently created rooms
-        Au.resetServer();
+        Au.resetServer(Au.varArea);
         Au.varMessageId = 0;
         Au.state = Au.states.stateLobby;
         Au.mainLoop();

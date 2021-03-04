@@ -13,32 +13,31 @@ export default  class EventProcessor {
   
 //handle events recieved over the wire 
   processEvent(evt){
-    let json = JSON.parse(evt);
-    //console.log("got event:",json.kind,json);
-    switch(json.kind){
+    let jsonObj = JSON.parse(evt);
+    switch(jsonObj.kind){
         case Au.EVENTS.JOIN:
-            this.evtJoin(json);
+            this.evtJoin(jsonObj);
             break;
         case Au.EVENTS.START:
-            this.evtStart(json);
+            this.evtStart(jsonObj);
             break;
         case Au.EVENTS.CLEAR_TASK:
-            this.evtClearTask(json);
+            this.evtClearTask(jsonObj);
             break;
         case Au.EVENTS.KILL:
-            this.evtKill(json);
+            this.evtKill(jsonObj);
             break;
         case Au.EVENTS.MEETING:
-            this.evtMeeting(json);
+            this.evtMeeting(jsonObj);
             break;
         case Au.EVENTS.SABOTAGE:
-            this.evtSabotage(json);
+            this.evtSabotage(jsonObj);
             break;
         case Au.EVENTS.VOTE:
-            this.evtVote(json);
+            this.evtVote(jsonObj);
             break;
         case Au.EVENTS.TAG_INFO:
-            this.evtTagInfo(json);
+            this.evtTagInfo(jsonObj);
             break;
     }
   }

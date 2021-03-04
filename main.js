@@ -137,9 +137,10 @@ Au.getMessage = function(messageId){
 };
 
 //Used to forcibly reset the DB (wipe all data)
-Au.resetServer = function(){
+Au.resetServer = function(area){
     let data = {
-        kind:"reset"
+        kind:"reset",
+		area:area
     };
     $.ajax({
         url:Au.BASE_URL,

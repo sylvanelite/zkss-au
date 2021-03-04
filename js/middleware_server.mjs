@@ -21,7 +21,7 @@ export default  class ServerMiddleware extends BaseMiddleware {
         }
     }
     if(allClear){
-        alert("Innocents win! All tasks clear!");//TODO: better win/loss mechanic (reveal imposter, etc)
+        console.log("Innocents win! All tasks clear!");//TODO: better win/loss mechanic (reveal imposter, etc)
     }
     
     
@@ -45,11 +45,11 @@ export default  class ServerMiddleware extends BaseMiddleware {
         }
     }
     if(imposterCount>=aliveCount){
-        alert("Game over, imposters win");
+        console.log("Game over, imposters win");
         //TODO: better game over
     }
     if(imposterCount<=0){
-        alert("Game over, imposters lose");
+        console.log("Game over, imposters lose");
     }
   }
   
