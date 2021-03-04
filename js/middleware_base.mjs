@@ -226,7 +226,9 @@ export default  class BaseMiddleware {
     return {result:self.VOTE_RESULTS.PLAYER_VOTED_OUT,playerId:votedId};
     
   }
-  
+  gameOver(imposterwin,description){
+    //this is overwritten, and is different from the client/server
+  }
   
   
   

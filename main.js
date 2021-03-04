@@ -88,6 +88,7 @@ Au.render = function(){
 //message should be a json string, processed by: JSON.stringify()
 Au.sendMessage = function(jsonString){
     let data = {
+        pid:Au.varPlayerId,
         kind:"send",
         area:Au.varArea,
         message:jsonString
@@ -112,6 +113,7 @@ Au.getMessage = function(messageId){
         messageId = Au.varMessageId;
     }
     let data = {
+        pid:Au.varPlayerId,
         kind:"get",
         area:Au.varArea,
         id:messageId
@@ -139,6 +141,7 @@ Au.getMessage = function(messageId){
 //Used to forcibly reset the DB (wipe all data)
 Au.resetServer = function(area){
     let data = {
+        pid:Au.varPlayerId,
         kind:"reset",
 		area:area
     };

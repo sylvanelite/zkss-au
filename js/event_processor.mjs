@@ -39,6 +39,9 @@ export default  class EventProcessor {
         case Au.EVENTS.TAG_INFO:
             this.evtTagInfo(jsonObj);
             break;
+        case Au.EVENTS.GAME_OVER:
+            this.evtGameOver(jsonObj);
+            break;
     }
   }
   
@@ -107,7 +110,13 @@ export default  class EventProcessor {
     let tag = json.tag;
     self.middleware.evtTagInfo(playerName,tag);
   }
-  
+  //imposterwin (true/false), description
+  evtGameOver(json){
+    let self = this;
+    let imposterwin = json.imposterwin;
+    let description = json.description;
+    self.middleware.gameOver(imposterwin,description);
+  }
   
   
 }

@@ -39,7 +39,7 @@ export default  class ClientMiddleware extends BaseMiddleware {
     if(from == Au.varPlayerId){
         alert("you have killed: "+self.model.varPlayers[player].displayName);
     }
-    //TODO: this should be on the server:
+    console.log("got kill",player,from);
     
   }
   
@@ -99,17 +99,21 @@ export default  class ClientMiddleware extends BaseMiddleware {
       });//kill will check the number of alive characters left
       Au.state = Au.states.statePlaying;
     }
-    //TODO: this should be on the server
-    if(tally.result == self.VOTE_RESULTS.IMPOSTER_WIN){
-        //Game over, imposters win with a majority
-        alert("Game over, imposters win");
-        return;
-    }
   }
   //TODO: this should be on the server
   clearTask(key){
     super.clearTask(key);
     let self = this;
+  }
+  gameOver(imposterwin,description){
+    super.gameOver(imposterwin,description);
+    let self=this;
+    //this is overwritten, and is different from the client/server
+    let result = "Innocents win, ";
+    if(imposterwin){
+      result = "Imposters win, ";
+    }
+    alert("Game over, "+result+description);
   }
   
     
