@@ -4,15 +4,10 @@ import BaseMiddleware from "./middleware_base.mjs";
 
 
 
-import ServerMiddleware from "./middleware_server.mjs";//TDOO: remove this 
 //use for interacting with the game model via the client-side version of the game
 export default  class ClientMiddleware extends BaseMiddleware {
   constructor() {
     super();
-    //this.tempServer = new ServerMiddleware();
-    //this.tempServer.model = this.model;
-    
-    
   }
   join(id,playername){
     super.join(id,playername);
@@ -45,7 +40,6 @@ export default  class ClientMiddleware extends BaseMiddleware {
         alert("you have killed: "+self.model.varPlayers[player].displayName);
     }
     //TODO: this should be on the server:
-     //this.tempServer.killPlayer(player,from);
     
   }
   
@@ -116,7 +110,6 @@ export default  class ClientMiddleware extends BaseMiddleware {
   clearTask(key){
     super.clearTask(key);
     let self = this;
-    //self.tempServer.clearTask(key);
   }
   
     
