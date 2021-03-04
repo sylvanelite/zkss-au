@@ -311,7 +311,7 @@ export default class StatePlaying {
         }
         
         //else, if you got here it's not a task for you, so instead show the player status
-        let rewardPlayer = Au.middleware.getPlayerByTag(task.rewardPlayer);
+        let rewardPlayer = Au.middleware.getPlayerByTag(qrId);
         if(rewardPlayer.isAlive){
             alert(rewardPlayer.displayName+" is alive");
         }else{
