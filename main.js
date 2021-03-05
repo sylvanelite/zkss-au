@@ -253,6 +253,100 @@ console.log(Au);
 
 
 
+//----testing AR toolkit
+
+
+
+
+
+
+window.onload = function() {
+Au.init();
+
+/*
+	ARController.getUserMediaThreeScene({
+		maxARVideoSize: 640,
+		cameraParam: 'AR/Data/camera_para.dat',
+		onSuccess: function(arScene, arController, arCamera) {
+
+			document.body.className = arController.orientation;
+
+			arController.setPatternDetectionMode(artoolkit.AR_TEMPLATE_MATCHING_MONO_AND_MATRIX);
+
+			var renderer = new THREE.WebGLRenderer({antialias: false});
+			//if (arController.orientation === 'portrait') {
+			
+			if (arController.orientation === 'portrait') {
+				var w = (window.innerWidth / arController.videoHeight) * arController.videoWidth;
+				var h = window.innerWidth;
+				renderer.setSize(w, h);
+				renderer.domElement.style.paddingBottom = (w-h) + 'px';
+			} else {
+				if (/Android|mobile|iPad|iPhone/i.test(navigator.userAgent)) {
+					renderer.setSize(window.innerWidth, (window.innerWidth / arController.videoWidth) * arController.videoHeight);
+				} else {
+					renderer.setSize(arController.videoWidth, arController.videoHeight);
+					document.body.className += ' desktop';
+				}
+			}
+            renderer.domElement.style.zIndex = -100;
+            renderer.domElement.style.position = "fixed";
+
+			document.body.insertBefore(renderer.domElement, document.body.firstChild);
+
+			var rotationV = 0;
+			var rotationTarget = 0;
+
+			renderer.domElement.addEventListener('click', function(ev) {
+				ev.preventDefault();
+				rotationTarget += 1;
+			}, false);
+
+            
+			var cube = new THREE.Mesh(
+				new THREE.BoxGeometry(1,1,1),
+				new THREE.MeshNormalMaterial()
+			);
+			cube.material.flatShading;
+			cube.position.z = 0.5;
+
+
+			var markerRoot = arController.createThreeBarcodeMarker(5, 1);
+			markerRoot.add(cube);
+			arScene.scene.add(markerRoot);
+
+			var markerRoot = arController.createThreeBarcodeMarker(20, 1);
+			arScene.scene.add(markerRoot);
+
+			arController.loadMarker('AR/Data/patt.hiro', function(markerId) {
+				var markerRoot = arController.createThreeMarker(markerId, 3);
+				markerRoot.add(cube);
+				arScene.scene.add(markerRoot);
+			});
+
+			var tick = function() {
+				arScene.process();
+                
+				cube.rotation.z += rotationV;
+				rotationV *= 0.8;
+
+				arScene.renderOn(renderer);
+				requestAnimationFrame(tick);
+			};
+
+			tick();
+
+		}
+	});
+*/
+
+};
+
+
+
+
+
+
 
 
 
