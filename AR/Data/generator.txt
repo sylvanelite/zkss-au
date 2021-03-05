@@ -1,0 +1,11 @@
+
+use
+https://www.the-qrcode-generator.com/
+to generate the borderless QR code
+
+use
+https://jeromeetienne.github.io/AR.js/three.js/examples/marker-training/examples/generator.html
+to generate the marker data
+
+
+

@@ -240,7 +240,7 @@ handleError = function(evt){
 window.addEventListener("error", handleError, true);
 console.warn = function(e){alert(e);}
 */
-window.onload = Au.init;
+
 
 
 
@@ -318,7 +318,7 @@ Au.init();
 			var markerRoot = arController.createThreeBarcodeMarker(20, 1);
 			arScene.scene.add(markerRoot);
 
-			arController.loadMarker('AR/Data/patt.hiro', function(markerId) {
+			arController.loadMarker('AR/Data/player_A.patt', function(markerId) {
 				var markerRoot = arController.createThreeMarker(markerId, 3);
 				markerRoot.add(cube);
 				arScene.scene.add(markerRoot);
