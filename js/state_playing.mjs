@@ -119,6 +119,9 @@ export default class StatePlaying {
             for(let i=0;i<self.varFakeTasks.length;i+=1){
                 let text = "Fake: "+self.varFakeTasks[i].name+" "+self.varFakeTasks[i].description;
                 ctx.fillStyle = "#FFFFFF";
+                if(!selfPlayer.isAlive){
+                    ctx.fillStyle = "#873333";//red text to indicate you've been killed
+                }
                 ctx.fillText(text, 10+0.5, taskY+0.5);
                 taskY+=24;
             }

@@ -81,23 +81,30 @@ export default  class ClientMiddleware extends BaseMiddleware {
   castVote(vote){
     super.castVote(vote);
     let self = this;
-    let tally = self.tallyVotes();
-    if(tally.result == self.VOTE_RESULTS.SKIPPED){
-        alert("Nobody voted out: "+tally.skipCount+" players skipped voting.");
+  }
+  voteResult(result,description,playerid){
+    super.voteResult(result,description,playerid);
+    let self = this;        console.log("vote get");
+
+    //this is overwritten, and is different from the client/server
+    if(result == self.VOTE_RESULTS.SKIPPED){
+        alert(description);
         Au.state = Au.states.statePlaying;
     }
-    if(tally.result == self.VOTE_RESULTS.INTERIM){ }//nothing to do
-    if(tally.result == self.VOTE_RESULTS.TIE){
-        alert("Nobody voted out: "+tally.tieCount+" players tied for votes.");
+    if(result == self.VOTE_RESULTS.TIE){
+        alert(description);
         Au.state = Au.states.statePlaying;
     }
-    if(tally.result == self.VOTE_RESULTS.PLAYER_VOTED_OUT){
-      alert("Voting out: "+Au.varPlayers[tally.playerId].displayName);
-      Au.evtKill({
-          name:tally.playerId,
-          from:Au.varPlayerId//TODO: will show a prompt that you've been killed by yourself
-      });//kill will check the number of alive characters left
+    if(result == self.VOTE_RESULTS.PLAYER_VOTED_OUT){
+      alert(description);
       Au.state = Au.states.statePlaying;
+      //call the super method, this does the actual killing
+      //the "self" version does the alerts kill from/to, which is not needed here
+        console.log("check vote kill: ",playerid);
+      if(playerid==Au.varPlayerId){
+        console.log("killing: ",playerid);
+        super.killPlayer(playerid,"voting");
+      }
     }
   }
   //TODO: this should be on the server

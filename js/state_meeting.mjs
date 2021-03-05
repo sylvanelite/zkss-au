@@ -116,9 +116,14 @@ export default class StateMeeting {
         let progress = Math.floor((cur/max)*100);
         $("#prgTasks").val(progress);
         $("#prgTasks").text(progress+"%");
-        //show the disabled button
-        $("#btnVote").prop("disabled",false);
         */
+        //show the vote button iff you're alive
+        let selfPlayer = Au.middleware.getPlayer(Au.varPlayerId);
+        if(selfPlayer.isAlive){
+          $("#btnVote").prop("disabled",false);
+        }else{
+          $("#btnVote").attr("disabled","disabled");
+        }
     }
     let ctx = Au.canvas.getContext("2d");
     ctx.clearRect(0,0,Au.canvas.width,Au.canvas.height);

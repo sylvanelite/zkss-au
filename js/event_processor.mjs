@@ -42,6 +42,9 @@ export default  class EventProcessor {
         case Au.EVENTS.GAME_OVER:
             this.evtGameOver(jsonObj);
             break;
+        case Au.EVENTS.VOTE_RESULT:
+            this.evtVoteResult(jsonObj);
+            break;
     }
   }
   
@@ -118,6 +121,14 @@ export default  class EventProcessor {
     self.middleware.gameOver(imposterwin,description);
   }
   
+  //isvoteout (true/false), result middleware.VOTE_RESULT, description, playerid
+  evtVoteResult(json){
+    let self = this;
+    let result = json.result;
+    let description = json.description;
+    let playerid = json.playerid;
+    self.middleware.voteResult(result,description,playerid);
+  }
   
 }
 

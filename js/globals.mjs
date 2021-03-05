@@ -26,7 +26,8 @@ export default  {
         SABOTAGE:"SABOTAGE",
         VOTE:"VOTE",
         TAG_INFO:"TAG_INFO",
-		GAME_OVER:"GAME_OVER"
+		GAME_OVER:"GAME_OVER",
+		VOTE_RESULT:"VOTE_RESULT"
     },
     TASKS:{
         KILL:"Kill",

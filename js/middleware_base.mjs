@@ -12,7 +12,8 @@ export default  class BaseMiddleware {
       TIE:"TIE",
       INTERIM:"INTERIM",
       IMPOSTER_WIN:"IMPOSTER_WIN",
-      PLAYER_VOTED_OUT:"PLAYER_VOTED_OUT"
+      PLAYER_VOTED_OUT:"PLAYER_VOTED_OUT",
+      IMPOSTER_LOSE:"IMPOSTER_LOSE"
     };
   }
   setSeed(seed){
@@ -131,7 +132,6 @@ export default  class BaseMiddleware {
     let taskCount = Au.TASK_NUMBER;
     for(let i=0;i<imposterCount;i+=1){
         self.model.varPlayers[keys[i]].isImposter = true;
-        console.log(keys[i],"is imposter");
     }
     //set up the innocent(s)
     for(let i=imposterCount;i<keys.length;i+=1){
@@ -183,14 +183,17 @@ export default  class BaseMiddleware {
         if(player.isAlive){
             aliveCount+=1;
             tally[player.id] = 0;
-        }
-        if(player.isImposter){
-            imposterCount+=1;
+            if(player.isImposter){
+                imposterCount+=1;
+            }
         }
     }
     tally.skip_vote = 0;//"skip_vote" is a reserved word to represent a fake player vote for skipping the round
     if(imposterCount>=aliveCount){
         return {result:self.VOTE_RESULTS.IMPOSTER_WIN};
+    }
+    if(imposterCount==0){
+        return {result:self.VOTE_RESULTS.IMPOSTER_LOSE};
     }
     //check a majority has been reached (aliveCount/2)
     for(let i=0;i<self.model.varVotes.length;i+=1){
@@ -229,7 +232,9 @@ export default  class BaseMiddleware {
   gameOver(imposterwin,description){
     //this is overwritten, and is different from the client/server
   }
-  
+  voteResult(isvoteout,result,description,playerid){
+    //this is overwritten, and is different from the client/server
+  }
   
   
 }

@@ -72,13 +72,50 @@ export default  class ServerMiddleware extends BaseMiddleware {
     let self = this;
     let tally = self.tallyVotes();
     
-    if(tally.result == self.VOTE_RESULTS.IMPOSTER_WIN){
-        //Game over, imposters win with a majority
+    //else, see if there's a result to send
+    if(tally.result == self.VOTE_RESULTS.SKIPPED){
         self.sendMessage({
-          kind:Au.EVENTS.GAME_OVER,
-          imposterwin:true,
-          description:"imposters voted out all innocents.",
-      });
+            kind:Au.EVENTS.VOTE_RESULT,
+            playerid:tally.playerId,
+            result: self.VOTE_RESULTS.SKIPPED,
+            description:"Nobody voted out: "+tally.skipCount+" players skipped voting.",
+        });
+    }
+    if(tally.result == self.VOTE_RESULTS.INTERIM){ }//nothing to do
+    if(tally.result == self.VOTE_RESULTS.TIE){
+        self.sendMessage({
+            kind:Au.EVENTS.VOTE_RESULT,
+            playerid:tally.playerId,
+            result: self.VOTE_RESULTS.TIE,
+            description:"Nobody voted out: "+tally.tieCount+" players tied for votes.",
+        });
+    }
+    if(tally.result == self.VOTE_RESULTS.PLAYER_VOTED_OUT){
+        self.sendMessage({
+            kind:Au.EVENTS.VOTE_RESULT,
+            playerid:tally.playerId,
+            result: self.VOTE_RESULTS.PLAYER_VOTED_OUT,
+            description:"Voting out: "+self.model.varPlayers[tally.playerId].displayName,
+        });
+        self.killPlayer(tally.playerId,"voting");
+        //recount votes, see if that changed anything
+        tally = self.tallyVotes();
+        if(tally.result == self.VOTE_RESULTS.IMPOSTER_LOSE){
+            //Game over, imposters win with a majority
+            self.sendMessage({
+              kind:Au.EVENTS.GAME_OVER,
+              imposterwin:false,
+              description:"innocents voted out all imposters.",
+          });
+        }
+        if(tally.result == self.VOTE_RESULTS.IMPOSTER_WIN){
+            //Game over, imposters win with a majority
+            self.sendMessage({
+              kind:Au.EVENTS.GAME_OVER,
+              imposterwin:true,
+              description:"imposters voted out all innocents.",
+          });
+        }
     }
   }
   
@@ -116,10 +153,14 @@ export default  class ServerMiddleware extends BaseMiddleware {
     if(message.kind == Au.EVENTS.GAME_OVER){
       return false;
     }
+    //clients can't trigger a vote result 
+    if(message.kind == Au.EVENTS.VOTE_RESULT){
+      return false;
+    }
     //only get kill messages if you sent it, or you are the target
     if(message.kind == Au.EVENTS.KILL){
       if(message.name!=playerId && message.from!=playerId){
-        //return false;//TODO: uncomment this when it's not required for local players to know the alive count (vote tally server side only)
+        return false;//TODO: uncomment this when it's not required for local players to know the alive count (vote tally server side only)
       }
     }
     
