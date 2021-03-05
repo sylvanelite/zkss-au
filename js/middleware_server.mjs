@@ -160,7 +160,8 @@ export default  class ServerMiddleware extends BaseMiddleware {
     //only get kill messages if you sent it, or you are the target
     if(message.kind == Au.EVENTS.KILL){
       if(message.name!=playerId && message.from!=playerId){
-        return false;//TODO: uncomment this when it's not required for local players to know the alive count (vote tally server side only)
+        //commented back out for now, since the meeting shows alive/dead. Should add metadata to meetings
+        //return false;//TODO: uncomment this when it's not required for local players to know the alive count (vote tally server side only)
       }
     }
     
