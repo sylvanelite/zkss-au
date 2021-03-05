@@ -174,17 +174,18 @@ export default  class BaseMiddleware {
   tallyVotes(){
     let self = this;
     //tally votes
-    let aliveCount = 0;
-    let imposterCount = 0;
+    let aliveCount = 0;//number of innocents alive
+    let imposterCount = 0;//number of imposters alive
     let keys = Object.keys(self.model.varPlayers);
     let tally = {};
     for(let i=0;i<keys.length;i+=1){
         let player = self.model.varPlayers[keys[i]];
+        tally[player.id] = 0;//add non-alive players to the tally, just have 0 votes
         if(player.isAlive){
-            aliveCount+=1;
-            tally[player.id] = 0;
             if(player.isImposter){
                 imposterCount+=1;
+            }else{
+              aliveCount+=1;
             }
         }
     }
@@ -207,10 +208,10 @@ export default  class BaseMiddleware {
             maxTally = tally[tallyKeys[i]];//find the highest vote
         }
     }
-    if(tally.skip_vote>=aliveCount/2){//skip was majority
+    if(tally.skip_vote>=Math.ceil(aliveCount/2)){//skip was majority
         return {result:self.VOTE_RESULTS.SKIPPED,skipCount:tally.skip_vote};
     }
-    if(maxTally<aliveCount/2){//not enough votes recorded yet
+    if(maxTally<Math.ceil(aliveCount/2)){//not enough votes recorded yet
         return {result:self.VOTE_RESULTS.INTERIM};
     }
     
