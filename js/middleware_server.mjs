@@ -45,10 +45,11 @@ export default  class ServerMiddleware extends BaseMiddleware {
     for(let i=0;i<keys.length;i+=1){
         let player = self.model.varPlayers[keys[i]];
         if(player.isAlive){
-            aliveCount+=1;
-        }
-        if(player.isImposter){
-            imposterCount+=1;
+            if(player.isImposter){
+                imposterCount+=1;
+            }else{
+              aliveCount+=1;
+            }
         }
     }
     if(imposterCount>=aliveCount){
