@@ -52,6 +52,9 @@ export default class AR {
 				}
 				self.animationFrameTimer = requestAnimationFrame(self.tick);
                 self.tick();
+				if(Au.hasOwnProperty("canvas")){
+					Au.canvas.style.opacity=0.5;
+				}
             }
         });
     }
@@ -70,6 +73,9 @@ export default class AR {
 		self.renderer = null;
 		self.arScene = null;
 		self.arController = null;
+		if(Au.hasOwnProperty("canvas")){
+			Au.canvas.style.opacity=1;
+		}
 	}
 
     makeTextSprite(message) {
