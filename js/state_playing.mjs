@@ -1,5 +1,6 @@
 
 import Au from "./globals.mjs";
+import AR from "./ar.mjs";
 
 export default class StatePlaying {
   constructor() {
@@ -27,6 +28,9 @@ export default class StatePlaying {
     </div>
     <div id="dvPlayingUI">
       <!--TODO: UI here-->
+		<div class="form-check form-switch">
+			<input class="form-check-input" type="checkbox" id="iptARCheck"  style="position:fixed;right:0px;">
+		</div>
       <label style="width:6em;height:6em;margin:1em;position:fixed;bottom:0px;line-height:4.5em;" class="btn btn-secondary align-middle" id="lblScan">
         Scan
         <input type="file" id="iptImgFile"style="display:none;"  capture="capture" >
@@ -42,7 +46,23 @@ export default class StatePlaying {
   $("#iptImgFile").on("change",function(){
       Au.scanFromFile();
   });
-    
+    $("#iptARCheck").on("change",function(){
+		if($("#iptARCheck").is(":checked")){
+			let useAr = confirm("use AR?");
+			if(useAr){
+				Au.AR = new AR();
+			}else{
+				$("#iptARCheck").prop("checked",false);
+				if(Au.hasOwnProperty("AR")){
+					Au.AR.destroyAR();
+				}
+			}
+		}else{
+			if(Au.hasOwnProperty("AR")){
+				Au.AR.destroyAR();
+			}
+		}
+	});
   }
   render(){
     let self = this;

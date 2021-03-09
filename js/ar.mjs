@@ -1,83 +1,100 @@
 
+import Au from "./globals.mjs";
 
 export default class AR {
-  constructor() {
-    let self = this;
-    
-	ARController.getUserMediaThreeScene({
-		maxARVideoSize: 640,
-		cameraParam: 'AR/Data/camera_para.dat',
-		onSuccess: function(arScene, arController, arCamera) {
-			document.body.className = arController.orientation;
-			arController.setPatternDetectionMode(artoolkit.AR_TEMPLATE_MATCHING_MONO_AND_MATRIX);
-			var renderer = new THREE.WebGLRenderer({antialias: false});
-			if (arController.orientation === 'portrait') {
-				var w = (window.innerWidth / arController.videoHeight) * arController.videoWidth;
-				var h = window.innerWidth;
-				renderer.setSize(w, h);
-				renderer.domElement.style.paddingBottom = (w-h) + 'px';
-			} else {
-				if (/Android|mobile|iPad|iPhone/i.test(navigator.userAgent)) {
-					renderer.setSize(window.innerWidth, (window.innerWidth / arController.videoWidth) * arController.videoHeight);
-				} else {
-					renderer.setSize(arController.videoWidth, arController.videoHeight);
-					document.body.className += ' desktop';
+    constructor() {
+        let self = this;
+        ARController.getUserMediaThreeScene({
+            maxARVideoSize: 640,
+            cameraParam: 'AR/Data/camera_para.dat',
+            onSuccess: function(arScene, arController, arCamera) {
+				self.arScene = arScene;
+				self.arController = arController;
+                document.body.className = arController.orientation;
+                arController.setPatternDetectionMode(artoolkit.AR_TEMPLATE_MATCHING_MONO_AND_MATRIX);
+                self.renderer = new THREE.WebGLRenderer({
+                    antialias: false
+                });
+                if (arController.orientation === 'portrait') {
+                    var w = (window.innerWidth / arController.videoHeight) * arController.videoWidth;
+                    var h = window.innerWidth;
+                    self.renderer.setSize(w, h);
+                    self.renderer.domElement.style.paddingBottom = (w - h) + 'px';
+                } else {
+                    if (/Android|mobile|iPad|iPhone/i.test(navigator.userAgent)) {
+                        self.renderer.setSize(window.innerWidth, (window.innerWidth / arController.videoWidth) * arController.videoHeight);
+                    } else {
+                        self.renderer.setSize(arController.videoWidth, arController.videoHeight);
+                        document.body.className += ' desktop';
+                    }
+                }
+                self.renderer.domElement.style.zIndex = -100;
+                self.renderer.domElement.style.position = "fixed";
+				self.renderer.domElement.id = "canvAR";
+
+                document.body.insertBefore(self.renderer.domElement, document.body.firstChild);
+				
+				let playerTags = ["A","B","C","D","E","F","G","H"];
+				let patternDetection = function(markerId) {
+                    var markerRoot = arController.createThreeMarker(markerId, 3);
+					let playerTag = playerTags[markerId];
+					let playerName = Au.middleware.getPlayerByTag(playerTag).displayName;
+                    let sprite = self.makeTextSprite(playerName);
+                    markerRoot.add(sprite);
+                    self.arScene.scene.add(markerRoot);
+                    console.log("added");
+                };
+                let pattern = 'AR/Data/player_'; //'AR/Data/patt.hiro'
+				let extension = ".patt";
+                //TODO: check it uses rear camera
+				for(let i=0;i<playerTags.length;i+=1){
+					arController.loadMarker(pattern+playerTags[i]+extension,patternDetection);
 				}
-			}
-      renderer.domElement.style.zIndex = -100;
-      renderer.domElement.style.position = "fixed";
-      
-			document.body.insertBefore(renderer.domElement, document.body.firstChild);
-      let pattern = 'AR/Data/player_A.patt';//'AR/Data/patt.hiro'
-      //TODO: load all players and show their names instead of "player A";
-      //TODO: check it uses rear camera
-			arController.loadMarker(pattern, function(markerId) {
-				var markerRoot = arController.createThreeMarker(markerId, 3);
-        let sprite = self.makeTextSprite("player A");
-				markerRoot.add(sprite);
-				arScene.scene.add(markerRoot);
-        console.log("added");
-			});
-
-			var tick = function() {
-				arScene.process();
-				arScene.renderOn(renderer);
-				requestAnimationFrame(tick);
-			};
-
-			tick();
-
+				self.animationFrameTimer = requestAnimationFrame(self.tick);
+                self.tick();
+            }
+        });
+    }
+	tick(){
+        let self = Au.AR;
+		if(self){
+			self.arScene.process();
+			self.arScene.renderOn(self.renderer);
+			self.animationFrameTimer = requestAnimationFrame(self.tick);
 		}
-	});
-    
-    
-  }
-  
-  
-     makeTextSprite( message  ) {
-      //https://stackoverflow.com/questions/23514274/three-js-2d-text-sprite-labels
+	}
+	destroyAR(){
+		let self = this;
+		$("#canvAR").remove();
+		cancelAnimationFrame(self.animationFrameTimer);
+		self.renderer = null;
+		self.arScene = null;
+		self.arController = null;
+	}
+
+    makeTextSprite(message) {
+        //https://stackoverflow.com/questions/23514274/three-js-2d-text-sprite-labels
         var fontface = "Arial";
-        var fontsize =  18;
+        var fontsize = 18;
         var canvas = document.createElement('canvas');
         var context = canvas.getContext('2d');
         let lineWidth = 4;
         context.font = "Bold " + fontsize + "px " + fontface;
         context.strokeStyle = "rgba(0,0,0,1.0)";
         context.lineWidth = lineWidth;
-        context.strokeText( message, lineWidth, fontsize + lineWidth);
+        context.strokeText(message, lineWidth, fontsize + lineWidth);
         context.fillStyle = "rgba(255,255,255,1.0)";
-        context.fillText( message, lineWidth, fontsize + lineWidth);
-        var texture = new THREE.Texture(canvas) ;
+        context.fillText(message, lineWidth, fontsize + lineWidth);
+        var texture = new THREE.Texture(canvas);
         texture.needsUpdate = true;
-        var spriteMaterial = new THREE.SpriteMaterial( { map: texture } );
-        var sprite = new THREE.Sprite( spriteMaterial );
+        var spriteMaterial = new THREE.SpriteMaterial({
+            map: texture
+        });
+        var sprite = new THREE.Sprite(spriteMaterial);
         sprite.scale.set(0.5 * fontsize, 0.25 * fontsize, 0.75 * fontsize);
-        return sprite;  
+        return sprite;
     }
-    
-  
-  
-  
-}
 
+
+}
 

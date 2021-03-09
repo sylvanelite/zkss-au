@@ -11,8 +11,6 @@ import StatePlaying from "./js/state_playing.mjs";
 import StateTask from "./js/state_task.mjs";
 import StateViewLog from "./js/state_view_log.mjs";
 
-import AR from "./js/ar.mjs";
-
 import ClientMiddleware from "./js/middleware_client.mjs";
 import EventProcessor from "./js/event_processor.mjs";
 
@@ -243,33 +241,11 @@ console.warn = function(e){alert(e);}
 */
 
 
-
-
-
-
 console.log(Au);
-
-
-
-
-
-
-//----testing AR toolkit
-
-
-
-
 
 
 window.onload = function() {
 Au.init();
-/*
-if (window.location.protocol == 'https:') {
-    let useAr = confirm("use AR?");
-    if(useAr){
-    Au.AR = new AR();
-    }
-}*/
 
 
 };
