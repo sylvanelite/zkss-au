@@ -1,4 +1,18 @@
 
+/*
+Table structure (postgres)
+CREATE TABLE messages (id SERIAL PRIMARY KEY, message text, area text, pid text)
+
+
+CREATE TABLE documents
+(
+    name character varying(100) NOT NULL,
+    content text NOT NULL,
+    CONSTRAINT document_name UNIQUE (name)
+)
+
+*/
+
 import BaseServerDataStore from "./server_data_store_base.mjs";
 
 export default class ServerDataStore extends BaseServerDataStore {

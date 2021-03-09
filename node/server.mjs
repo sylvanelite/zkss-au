@@ -5,19 +5,6 @@ import ServerMiddleware from "../js/middleware_server.mjs";
 import EventProcessor from "../js/event_processor.mjs";
 import ServerDataStore from "../js/server_data_store_base.mjs";
 
-/*
-Table structure (postgres)
-CREATE TABLE messages (id SERIAL PRIMARY KEY, message text, area text, pid text)
-
-
-CREATE TABLE documents
-(
-    name character varying(100) NOT NULL,
-    content text NOT NULL,
-    CONSTRAINT document_name UNIQUE (name)
-)
-
-*/
 
 let getServerId = function(){
 	//this is just a key to flag that messages are from the server
@@ -50,15 +37,11 @@ export default async function(request,response,client) {
 		await dataStore.connect();
 		
 		if(kind=="reset"){
-			//TODO: nukes the whole table....
-			
 			//generate an empty model for population later
 			let serverData = new ServerMiddleware();
 			await dataStore.resetState();
 			await dataStore.resetMessages();
 			await dataStore.saveState(area,serverData.model);
-			
-			
 			responseObj.success = true;
 			responseObj.data = "reset successful";
 		}
