@@ -3,6 +3,7 @@
 
 import ServerMiddleware from "../js/middleware_server.mjs";
 import EventProcessor from "../js/event_processor.mjs";
+import ServerDataStore from "../js/server_data_store_base.mjs";
 
 /*
 Table structure (postgres)
@@ -16,7 +17,6 @@ CREATE TABLE documents
     CONSTRAINT document_name UNIQUE (name)
 )
 
-
 */
 
 let getServerId = function(){
@@ -29,29 +29,12 @@ let getServerId = function(){
 	return "server__server";
 };
 
-let getState  = async function (area,client){
-	//retrieve model from the database
-	let doc_name = "zkss_"+area;
-	return client.query('  SELECT name, content FROM documents '+
-								  ' WHERE  name=$1 ',[doc_name]);
-	
-};
-let saveState = async function (area,state,client){
-	let doc_name = "zkss_"+area;
-	let doc_state = state;
-	return client.query('  INSERT INTO documents (name, content) '+
-            ' VALUES ($1, $2) ON CONFLICT (name) DO UPDATE '+
-            ' SET content=$2 WHERE documents.name=$1',[doc_name,doc_state]);
-};
-
-
 export default async function(request,response,client) {
 	var responseObj = {
 		success:false,
 		data:{}
 	};
     try{
-		
 		let params = request.body;
 		if(!params.hasOwnProperty("kind")||
 			!params.hasOwnProperty("area")||
@@ -63,16 +46,17 @@ export default async function(request,response,client) {
 		let kind = params.kind;
 		let area = params.area;
 		let playerId = params.pid;
-		await client.connect();
+		let dataStore = new ServerDataStore(client);
+		await dataStore.connect();
 		
 		if(kind=="reset"){
 			//TODO: nukes the whole table....
 			
 			//generate an empty model for population later
 			let serverData = new ServerMiddleware();
-			await client.query(' DELETE FROM messages ' );
-			await client.query(" DELETE FROM documents where name like 'zkss_%' " );
-			await saveState(area,serverData.model,client);
+			await dataStore.resetState();
+			await dataStore.resetMessages();
+			await dataStore.saveState(area,serverData.model);
 			
 			
 			responseObj.success = true;
@@ -82,13 +66,12 @@ export default async function(request,response,client) {
 			if(!params.hasOwnProperty("message")){
 				responseObj.data = "unkonwn message";
 				response.send(responseObj);
-				client.end();
+				await dataStore.end();
 				return;
 			}
 			let message = params.message;
-			await client.query(' INSERT INTO messages(message,area,pid) values ($1,$2,$3) ',[message,area,playerId]);
-			
-			let dbModelResult = await getState(area,client);
+			await dataStore.saveMessage(message,area,playerId);
+			let dbModelResult = await dataStore.getState(area);
 			let dbModel = JSON.parse(dbModelResult.rows[0].content);
 			let serverData = new ServerMiddleware();
 			serverData.model = dbModel;
@@ -96,10 +79,9 @@ export default async function(request,response,client) {
 			eventProcessor.processEvent(message);
 			for(let i=0;i<serverData.internalMessageBuffer.length;i+=1){
 				let serverMsg =serverData.internalMessageBuffer[i];
-				await client.query(' INSERT INTO messages(message,area,pid) values ($1,$2,$3) ',[serverMsg,area,getServerId()]);
+				await dataStore.saveMessage(serverMsg,area,getServerId());
 			}
-			await saveState(area,serverData.model,client);
-			
+			await dataStore.saveState(area,serverData.model);
 			
 			responseObj.success = true;
 			responseObj.data = "added message";
@@ -110,15 +92,14 @@ export default async function(request,response,client) {
 			if(!params.hasOwnProperty("id") ){
 				responseObj.data = "unkonwn id";
 				response.send(responseObj);
-				client.end();
+				await dataStore.end();
 				return;
 			}
 			let id = params.id;
-			let result = await client.query('SELECT id,message,pid FROM messages where id > $1 and area = $2 ORDER BY id  ',[id,area]);
+			let result = await dataStore.getMessages(id,area);
 			let resultData = result.rows;
-			
 			if(resultData.length>0){
-				let dbModelResult = await getState(area,client);
+				let dbModelResult = await dataStore.getState(area);
 				let dbModel = JSON.parse(dbModelResult.rows[0].content);
 				let serverData = new ServerMiddleware();
 				serverData.model = dbModel;
@@ -135,7 +116,7 @@ export default async function(request,response,client) {
 			responseObj.data = resultData;
 			response.send(responseObj);			
 		}
-		client.end();
+		await dataStore.end();
     }catch(e){
         responseObj.data ="error: "+e;
         response.send(responseObj);
