@@ -37,6 +37,7 @@ export default class StatePlaying {
   $("#main").append($(playingTemplate));
   $("#btnAction").on("click",function(){
      self.doAction(self.varCurrentTask,self.varCurrentTaskId);
+     $("#btnAction").attr("disabled","disabled");
   });
   $("#iptImgFile").on("change",function(){
       Au.scanFromFile();
@@ -152,6 +153,7 @@ export default class StatePlaying {
             $("#btnAction").attr("data-action",self.varCurrentTask);
             if(self.varCurrentTask.length>0){
                 $("#btnAction").text(self.varCurrentTask);
+                $("#btnAction").prop("disabled",false);
                 $("#btnAction").show();
             }else{
                 $("#btnAction").text("--");
@@ -212,12 +214,12 @@ export default class StatePlaying {
     }
     let isImposter = selfPlayer.isImposter;
     if(isImposter){
-        if(qrKind == "player"){
-            self.varCurrentTask = Au.TASKS.KILL;
-            self.varCurrentTaskId = qrId;
-        }
         if(qrKind == "task"){
             self.varCurrentTask = Au.TASKS.SABOTAGE;
+            self.varCurrentTaskId = qrId;
+        }
+        if(qrKind == "player"){
+            self.varCurrentTask = Au.TASKS.KILL;
             self.varCurrentTaskId = qrId;
         }
     }

@@ -8,14 +8,29 @@ export default class StateViewLog {
   }
   
   init(){
-    //nothing to do, but it dies require the canvas to be displayed
+    let logTemplate = `
+	<div id="dvViewLog" style="display:none;">
+  
+	<button id="btnCloseLogs" style="position:fixed;bottom:0px;width:6em;height:6em;margin:1em;" class="btn btn-secondary" >Close</button>
+	
+	</div>`;
+  $("#main").append($(logTemplate));
+  
+  $("#btnCloseLogs").on("click",function () {
+      //back out of minigame without doing changes
+        Au.state = Au.states.statePlaying;
+      //clear out whatever was selected before
+      Au.states.stateViewLog.varLogMessages = [];
+  });
   }
   render(){
     let self = this;
     let fontFamily = ' system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial';
-    
-    if(!$("#btnCloseTask").is(":visible")){
-        $("#btnCloseTask").show();
+    if(!$("#dvViewLog").is(":visible")){
+        $("#dvViewLog").show();
+    }
+    if(!$("#btnCloseLogs").is(":visible")){
+        $("#btnCloseLogs").show();
     }
     if(!$("#dvPlayingUI").is(":visible")){
         $("#dvPlayingUI").show();
@@ -34,7 +49,9 @@ export default class StateViewLog {
         logY+=24;
     }
   }
-  hide(){}
+  hide(){
+    $("#dvViewLog").hide();
+  }
   update(){
   //no-op for log
   }
