@@ -28,7 +28,6 @@ export default class AR {
 				let h = scale*vidH;
 				
 				self.renderer.setSize(w, h);
-				self.renderer.domElement.style.paddingBottom = (w - h) + 'px';
                 self.renderer.domElement.style.zIndex = -100;
                 self.renderer.domElement.style.position = "fixed";
 				self.renderer.domElement.id = "canvAR";
