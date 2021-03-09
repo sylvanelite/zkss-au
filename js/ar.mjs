@@ -5,7 +5,6 @@ export default class AR {
     constructor() {
         let self = this;
         ARController.getUserMediaThreeScene({
-            maxARVideoSize: 640,
             cameraParam: 'AR/Data/camera_para.dat',
             onSuccess: function(arScene, arController, arCamera) {
 				self.arScene = arScene;
@@ -15,19 +14,13 @@ export default class AR {
                 self.renderer = new THREE.WebGLRenderer({
                     antialias: false
                 });
-                if (arController.orientation === 'portrait') {
-                    var w = (window.innerWidth / arController.videoHeight) * arController.videoWidth;
-                    var h = window.innerWidth;
-                    self.renderer.setSize(w, h);
-                    self.renderer.domElement.style.paddingBottom = (w - h) + 'px';
-                } else {
-                    if (/Android|mobile|iPad|iPhone/i.test(navigator.userAgent)) {
-                        self.renderer.setSize(window.innerWidth, (window.innerWidth / arController.videoWidth) * arController.videoHeight);
-                    } else {
-                        self.renderer.setSize(arController.videoWidth, arController.videoHeight);
-                        document.body.className += ' desktop';
-                    }
-                }
+				
+				let scale = Math.min(window.innerWidth/arController.videoWidth, window.innerHeight/arController.videoHeight);
+				let w = scale*arController.videoWidth;
+				let h = scale*arController.videoHeight;
+				
+				self.renderer.setSize(w, h);
+				self.renderer.domElement.style.paddingBottom = (w - h) + 'px';
                 self.renderer.domElement.style.zIndex = -100;
                 self.renderer.domElement.style.position = "fixed";
 				self.renderer.domElement.id = "canvAR";
