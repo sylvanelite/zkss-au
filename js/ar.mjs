@@ -24,7 +24,9 @@ export default class AR {
                 self.renderer.domElement.style.zIndex = -100;
                 self.renderer.domElement.style.position = "fixed";
 				self.renderer.domElement.id = "canvAR";
-
+                if(window.innerWidth<window.innerHeight){
+                    self.renderer.domElement.style.transform = 'rotate(270deg)';
+                }
                 document.body.insertBefore(self.renderer.domElement, document.body.firstChild);
 				
 				let playerTags = ["A","B","C","D","E","F","G","H"];
