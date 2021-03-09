@@ -39,7 +39,6 @@ export default  class ClientMiddleware extends BaseMiddleware {
     if(from == Au.varPlayerId){
         alert("you have killed: "+self.model.varPlayers[player].displayName);
     }
-    console.log("got kill",player,from);
     
   }
   
@@ -84,8 +83,8 @@ export default  class ClientMiddleware extends BaseMiddleware {
   }
   voteResult(result,description,playerid){
     super.voteResult(result,description,playerid);
-    let self = this;        console.log("vote get");
-
+    let self = this; 
+    
     //this is overwritten, and is different from the client/server
     if(result == self.VOTE_RESULTS.SKIPPED){
         alert(description);
@@ -100,9 +99,7 @@ export default  class ClientMiddleware extends BaseMiddleware {
       Au.state = Au.states.statePlaying;
       //call the super method, this does the actual killing
       //the "self" version does the alerts kill from/to, which is not needed here
-        console.log("check vote kill: ",playerid);
       if(playerid==Au.varPlayerId){
-        console.log("killing: ",playerid);
         super.killPlayer(playerid,"voting");
       }
     }
