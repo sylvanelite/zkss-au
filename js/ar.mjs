@@ -14,19 +14,24 @@ export default class AR {
                 self.renderer = new THREE.WebGLRenderer({
                     antialias: false
                 });
-				
-				let scale = Math.min(window.innerWidth/arController.videoWidth, window.innerHeight/arController.videoHeight);
-				let w = scale*arController.videoWidth;
-				let h = scale*arController.videoHeight;
+                console.log(arController.videoWidth,arController.videoHeight);
+                let vidW = arController.videoWidth;
+                let vidH = arController.videoHeight;
+                if(window.innerWidth<window.innerHeight){
+                    self.renderer.domElement.style.transform = 'rotate(270deg)';
+                    let temp = vidW;
+                    vidW = vidH;
+                    vidH = temp;
+                }
+				let scale = window.innerWidth/vidW;
+				let w = scale*vidW;
+				let h = scale*vidH;
 				
 				self.renderer.setSize(w, h);
 				self.renderer.domElement.style.paddingBottom = (w - h) + 'px';
                 self.renderer.domElement.style.zIndex = -100;
                 self.renderer.domElement.style.position = "fixed";
 				self.renderer.domElement.id = "canvAR";
-                if(window.innerWidth<window.innerHeight){
-                    self.renderer.domElement.style.transform = 'rotate(270deg)';
-                }
                 document.body.insertBefore(self.renderer.domElement, document.body.firstChild);
 				
 				let playerTags = ["A","B","C","D","E","F","G","H"];
@@ -41,7 +46,6 @@ export default class AR {
                 };
                 let pattern = 'AR/Data/player_'; //'AR/Data/patt.hiro'
 				let extension = ".patt";
-                //TODO: check it uses rear camera
 				for(let i=0;i<playerTags.length;i+=1){
 					arController.loadMarker(pattern+playerTags[i]+extension,patternDetection);
 				}
