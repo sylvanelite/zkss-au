@@ -114,7 +114,7 @@ export default  class BaseMiddleware {
         task.SabotageCooldown = 0;
         return task;
     };
-    let keys = Object.keys(self.model.varPlayers);
+    let keys = Object.keys(self.model.varPlayers);//NOTE: requires the keys to be randomised. (done via getRandomString() in init))
     keys.sort();//sort initially to make sure everyone has a synchronised array
     shuffleArray(keys);//shuffle it to set the imposter(s) randomly, shuffle uses a PRNG so is deterministic over all players
     
@@ -190,31 +190,28 @@ export default  class BaseMiddleware {
         }
     }
     tally.skip_vote = 0;//"skip_vote" is a reserved word to represent a fake player vote for skipping the round
-    if(imposterCount>=aliveCount){
+    if(imposterCount>=aliveCount){//imposters have majority
         return {result:self.VOTE_RESULTS.IMPOSTER_WIN};
     }
-    if(imposterCount==0){
+    if(imposterCount==0){//no imposters are in the vote
         return {result:self.VOTE_RESULTS.IMPOSTER_LOSE};
     }
-    //check a majority has been reached (aliveCount/2)
+    //tally up the votes from alive players
+    let maxTally = 0;  //highest number of votes for a single choice
+    let totalTally = 0;//total votes cast overall
     for(let i=0;i<self.model.varVotes.length;i+=1){
         let vote = self.model.varVotes[i];
-        tally[vote.name]+=1;
+        if(self.model.varPlayers[vote.from].isAlive){
+          tally[vote.name]+=1;
+          totalTally+=1;
+        }
     }
     let tallyKeys = Object.keys(tally);
-    let maxTally = 0;
     for(let i=0;i<tallyKeys.length;i+=1){
         if(tally[tallyKeys[i]]>maxTally){
             maxTally = tally[tallyKeys[i]];//find the highest vote
         }
     }
-    if(tally.skip_vote>=Math.ceil(aliveCount/2)){//skip was majority
-        return {result:self.VOTE_RESULTS.SKIPPED,skipCount:tally.skip_vote};
-    }
-    if(maxTally<Math.ceil(aliveCount/2)){//not enough votes recorded yet
-        return {result:self.VOTE_RESULTS.INTERIM};
-    }
-    
     let tieCount=0;
     let votedId = "";
     for(let i=0;i<tallyKeys.length;i+=1){
@@ -223,10 +220,26 @@ export default  class BaseMiddleware {
             votedId = tallyKeys[i];
         }
     }
+    //short circuit: votes for 1 choice are the majority
+    if(tally.skip_vote>Math.ceil(aliveCount/2)){//skip was majority
+        return {result:self.VOTE_RESULTS.SKIPPED,skipCount:tally.skip_vote};
+    }
+    if(maxTally>Math.ceil(aliveCount/2)){//playerId was a majority
+        return {result:self.VOTE_RESULTS.PLAYER_VOTED_OUT,playerId:votedId};
+    }
+    //nothing is a clear majority, check to see if all votes are cast
+    if(totalTally<aliveCount+imposterCount){//not enough votes recorded yet
+        return {result:self.VOTE_RESULTS.INTERIM};
+    }
+    //all votes have been cast, see if there's a tie
     if(tieCount>1){
         return {result:self.VOTE_RESULTS.TIE,tieCount:tieCount};
     }
-    //voted out: votedId
+    //no tie, but skip was the leading choice
+    if(votedId=="skip_vote"){
+        return {result:self.VOTE_RESULTS.SKIPPED,skipCount:tally.skip_vote};
+    }
+    //no tie, vote out the player with the highest number of votes
     return {result:self.VOTE_RESULTS.PLAYER_VOTED_OUT,playerId:votedId};
     
   }
