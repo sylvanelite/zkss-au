@@ -61,7 +61,7 @@ export default async function(request,response,client) {
 			let eventProcessor = new EventProcessor(serverData);
 			eventProcessor.processEvent(message);
 			for(let i=0;i<serverData.internalMessageBuffer.length;i+=1){
-				let serverMsg =serverData.internalMessageBuffer[i];
+				let serverMsg = JSON.stringify(serverData.internalMessageBuffer[i]);
 				await dataStore.saveMessage(serverMsg,area,getServerId());
 			}
 			await dataStore.saveState(area,serverData.model);
