@@ -140,6 +140,7 @@ export default class AR {
             map: texture
         });
         var sprite = new THREE.Sprite(spriteMaterial);
+        sprite.scale.set(0.5 * fontsize, 0.25 * fontsize, 0.75 * fontsize);
         return sprite;
     }
 
