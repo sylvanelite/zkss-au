@@ -88,7 +88,15 @@ export default  class EventProcessor {
   evtMeeting(json){
     let self = this;
     let host = json.host;
-    self.middleware.hostMeeting(host);
+    let kills = [];
+    let progress = 0;
+    if(json.hasOwnProperty("kills")){
+      kills = json.kills;
+    }
+    if(json.hasOwnProperty("progress")){
+      progress = json.progress;
+    }
+    self.middleware.hostMeeting(host,kills,progress);
   }
   
 //sabotage [event]

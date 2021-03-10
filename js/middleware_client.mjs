@@ -42,12 +42,14 @@ export default  class ClientMiddleware extends BaseMiddleware {
     
   }
   
-  hostMeeting(host){
-    super.hostMeeting(host);
+  hostMeeting(host,kills,progress){
+    super.hostMeeting(host,kills,progress);
     let self = this;
     Au.state = Au.states.stateMeeting;
     Au.states.stateMeeting.varMeetingHost = host;
     Au.states.statePlaying.varMeetingCooldown = Au.TIME_BETWEEN_MEETING;
+    Au.states.stateMeeting.varKills = kills;
+    Au.states.stateMeeting.varProgress = progress;
   }
   
   sabotageEvent(evt){

@@ -160,7 +160,7 @@ export default  class BaseMiddleware {
   evtTagInfo(playerName,tag){}
   
   
-  hostMeeting(host){
+  hostMeeting(host,kills,progress){
     let self = this;
     self.model.varVotes = [];
   }

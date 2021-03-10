@@ -4,6 +4,8 @@ import Au from "./globals.mjs";
 export default class StateMeeting {
   constructor() {
     this.varMeetingHost = "";
+    this.varKills = [];
+    this.varProgress = 0;
   }
   
   init(){
@@ -101,22 +103,8 @@ export default class StateMeeting {
             }
         }
         //show progress level
-        //<progress id="prgTasks" max="100" value="0"> 0% </progress>
-        /*
-        //TODO: progress bar, note: if theres only 1 imposter 0 tasks will be populated
-        let taskKeys = Object.keys(Au.varTasks);
-        let max = taskKeys.length;
-        let cur = 0 ;
-        for(let i=0;i<taskKeys.length;i+=1){
-            let task = Au.varTasks[taskKeys[i]];
-            if(task.isClear){
-                cur+=1;
-            }
-        }
-        let progress = Math.floor((cur/max)*100);
-        $("#prgTasks").val(progress);
-        $("#prgTasks").text(progress+"%");
-        */
+        $("#prgTasks").val(this.varProgress);
+        $("#prgTasks").text(this.varProgress+"%");
         //show the vote button iff you're alive
         let selfPlayer = Au.middleware.getPlayer(Au.varPlayerId);
         if(selfPlayer.isAlive){

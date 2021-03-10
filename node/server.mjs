@@ -81,6 +81,7 @@ export default async function(request,response,client) {
 			let id = params.id;
 			let result = await dataStore.getMessages(id,area);
 			let resultData = result.rows;
+			let messagesToSend = [];
 			if(resultData.length>0){
 				let dbModelResult = await dataStore.getState(area);
 				let dbModel = JSON.parse(dbModelResult.rows[0].content);
@@ -88,15 +89,18 @@ export default async function(request,response,client) {
 				serverData.model = dbModel;
 				for(let i=resultData.length-1;i>=0;i-=1){
 					let msgToValidate = resultData[i];
-					let canBeSent = serverData.messageCanBeSent(msgToValidate.message,playerId,msgToValidate.pid,getServerId());
-					if(!canBeSent){
-						resultData.splice(i,1);
+					let filteredMessage = serverData.messageCanBeSent(msgToValidate.message,playerId,msgToValidate.pid,getServerId());
+					if(filteredMessage){
+						messagesToSend.push({
+							id:msgToValidate.id,
+							message:JSON.stringify(filteredMessage)
+						});
 					}
 				}
 			}
 			
 			responseObj.success = true;
-			responseObj.data = resultData;
+			responseObj.data = messagesToSend;
 			response.send(responseObj);			
 		}
 		await dataStore.end();
